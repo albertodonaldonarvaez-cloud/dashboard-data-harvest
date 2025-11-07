@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Dashboard from "./pages/Dashboard";
 import DataList from "./pages/DataList";
+import Analytics from "./pages/Analytics";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 
@@ -14,6 +15,7 @@ function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Dashboard} />
+      <Route path={"/analytics"} component={Analytics} />
       <Route path={"/data"} component={DataList} />
       <Route path={"/users"} component={Users} />
       <Route path={"/settings"} component={Settings} />

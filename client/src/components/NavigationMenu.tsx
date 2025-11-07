@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Home, BarChart3, Settings, Users } from 'lucide-react';
+import { Home, BarChart3, Settings, Users, Database } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +12,8 @@ const NavigationMenu = ({ className }: NavigationMenuProps) => {
 
   const navItems = [
     { icon: Home, label: 'Inicio', path: '/' },
-    { icon: BarChart3, label: 'Datos', path: '/data' },
+    { icon: BarChart3, label: 'Analytics', path: '/analytics' },
+    { icon: Database, label: 'Datos', path: '/data' },
     { icon: Users, label: 'Usuarios', path: '/users' },
     { icon: Settings, label: 'Config', path: '/settings' },
   ];

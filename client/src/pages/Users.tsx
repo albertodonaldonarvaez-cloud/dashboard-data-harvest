@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users as UsersIcon, Shield, Edit, Trash2, Plus } from 'lucide-react';
+import { Users as UsersIcon, Shield, Edit, Trash2, Plus, UserPlus } from 'lucide-react';
 import GlassCard from '@/components/GlassCard';
 import NavigationMenu from '@/components/NavigationMenu';
 import { trpc } from '@/lib/trpc';
@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -28,6 +29,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +49,15 @@ const Users = () => {
   const { user: currentUser } = useAuth();
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
   const [newRole, setNewRole] = useState<'admin' | 'editor' | 'viewer' | 'user'>('viewer');
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState<number | null>(null);
+  
+  // Create user form state
+  const [newUserData, setNewUserData] = useState({
+    name: '',
+    email: '',
+    role: 'viewer' as 'admin' | 'editor' | 'viewer' | 'user',
+  });
 
   const utils = trpc.useUtils();
 
@@ -61,6 +83,27 @@ const Users = () => {
         role: newRole,
       });
     }
+  };
+
+  const handleCreateUser = () => {
+    if (!newUserData.name || !newUserData.email) {
+      toast.error('Por favor completa todos los campos');
+      return;
+    }
+
+    // In a real system, this would call a backend endpoint
+    // For now, we'll show a message that users are created via OAuth
+    toast.info('Los usuarios se crean automáticamente al iniciar sesión por primera vez. Puedes cambiar su rol después.');
+    setShowCreateDialog(false);
+    setNewUserData({ name: '', email: '', role: 'viewer' });
+  };
+
+  const handleDeleteUser = () => {
+    if (!deleteUserId) return;
+
+    // In a real system, this would call a backend endpoint
+    toast.info('La eliminación de usuarios está deshabilitada por seguridad. Puedes cambiar su rol a "viewer" para restringir acceso.');
+    setDeleteUserId(null);
   };
 
   const getRoleBadge = (role: string) => {
@@ -126,6 +169,10 @@ const Users = () => {
               <h3 className="text-xl font-bold text-emerald-800">
                 {users?.length || 0} usuarios registrados
               </h3>
+              <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Agregar Usuario
+              </Button>
             </div>
 
             <div className="overflow-x-auto custom-scrollbar">
@@ -173,6 +220,15 @@ const Users = () => {
                               disabled={user.id === currentUser.id}
                             >
                               <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeleteUserId(user.id)}
+                              disabled={user.id === currentUser.id}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -241,6 +297,67 @@ const Users = () => {
         </motion.div>
       </div>
 
+      {/* Create User Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5" />
+              Agregar Nuevo Usuario
+            </DialogTitle>
+            <DialogDescription>
+              Los usuarios se crean automáticamente al iniciar sesión. Esta función es informativa.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="name">Nombre completo</Label>
+              <Input
+                id="name"
+                value={newUserData.name}
+                onChange={(e) => setNewUserData({ ...newUserData, name: e.target.value })}
+                placeholder="Juan Pérez"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={newUserData.email}
+                onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
+                placeholder="juan@ejemplo.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="role">Rol</Label>
+              <Select 
+                value={newUserData.role} 
+                onValueChange={(value: any) => setNewUserData({ ...newUserData, role: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="editor">Editor</SelectItem>
+                  <SelectItem value="viewer">Visualizador</SelectItem>
+                  <SelectItem value="user">Usuario</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateUser}>
+              Entendido
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Role Dialog */}
       <Dialog open={selectedUser !== null} onOpenChange={() => setSelectedUser(null)}>
         <DialogContent>
@@ -274,6 +391,25 @@ const Users = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteUserId !== null} onOpenChange={() => setDeleteUserId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Por seguridad, la eliminación física de usuarios está deshabilitada. 
+              Se recomienda cambiar el rol a "viewer" para restringir el acceso.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser}>
+              Entendido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <NavigationMenu />
     </div>

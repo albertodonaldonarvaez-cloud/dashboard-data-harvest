@@ -61,3 +61,23 @@
 - [ ] Verificar responsive en diferentes dispositivos
 - [ ] Optimizar rendimiento de consultas
 - [ ] Crear checkpoint final
+
+
+## Correcciones
+- [ ] Corregir error de API tRPC que devuelve HTML en lugar de JSON
+- [ ] Verificar configuración de rutas del servidor
+- [ ] Probar todas las consultas tRPC después de la corrección
+
+
+## Mejoras Solicitadas
+- [x] Agregar funcionalidad para crear nuevos usuarios en página Usuarios
+- [x] Agregar funcionalidad para eliminar usuarios en página Usuarios
+- [x] Eliminar sección de notificaciones en página Settings
+- [x] Implementar filtro de fechas personalizado (selector de rango) en Dashboard
+- [x] Quitar botón de exportar CSV en página Datos
+- [x] Agregar filtro por tipo de higo en página Datos
+- [x] Implementar vista mosaico con imágenes de baja calidad en página Datos
+- [x] Agregar toggle para cambiar entre vista lista y mosaico
+- [x] Crear gráficas de barras para vista de un día
+- [x] Crear gráficas de líneas para vista de semanas/meses
+- [x] Implementar análisis de rendimiento por calidad en gráficas

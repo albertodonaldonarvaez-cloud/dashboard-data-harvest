@@ -5,25 +5,29 @@ import { es } from 'date-fns/locale';
 import { Calendar, TrendingUp, Package, Scale, MapPin } from 'lucide-react';
 import GlassCard from '@/components/GlassCard';
 import NavigationMenu from '@/components/NavigationMenu';
+import { DateRangePicker } from '@/components/DateRangePicker';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { DateRange } from 'react-day-picker';
 
 const Dashboard = () => {
-  const [startDate, setStartDate] = useState(() => subDays(new Date(), 7));
-  const [endDate, setEndDate] = useState(() => new Date());
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 7),
+    to: new Date(),
+  });
 
   // Fetch stats
   const { data: stats, isLoading: statsLoading } = trpc.harvests.stats.useQuery({
-    startDate: startDate.toISOString(),
-    endDate: endDate.toISOString(),
+    startDate: dateRange?.from?.toISOString() || subDays(new Date(), 7).toISOString(),
+    endDate: dateRange?.to?.toISOString() || new Date().toISOString(),
   });
 
   // Fetch harvests list
   const { data: harvests, isLoading: harvestsLoading } = trpc.harvests.list.useQuery({
-    startDate: startDate.toISOString(),
-    endDate: endDate.toISOString(),
+    startDate: dateRange?.from?.toISOString() || subDays(new Date(), 7).toISOString(),
+    endDate: dateRange?.to?.toISOString() || new Date().toISOString(),
   });
 
   const formatWeight = (grams: number | null | undefined) => {
@@ -53,9 +57,11 @@ const Dashboard = () => {
               HarvestDash
             </h1>
             <p className="text-emerald-700">Sistema de Gestión de Cosecha Inteligente</p>
-            <p className="text-sm text-emerald-600 mt-2">
-              Rango: {format(startDate, 'dd MMM', { locale: es })} - {format(endDate, 'dd MMM yyyy', { locale: es })}
-            </p>
+            {dateRange?.from && dateRange?.to && (
+              <p className="text-sm text-emerald-600 mt-2">
+                Rango: {format(dateRange.from, 'dd MMM', { locale: es })} - {format(dateRange.to, 'dd MMM yyyy', { locale: es })}
+              </p>
+            )}
           </GlassCard>
         </motion.div>
 
@@ -66,43 +72,54 @@ const Dashboard = () => {
           transition={{ duration: 0.6, delay: 0.1 }}
         >
           <GlassCard className="p-4 mb-6" hover={false}>
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-emerald-600" />
                 <span className="font-medium text-emerald-800">Filtrar por fecha:</span>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setStartDate(subDays(new Date(), 7));
-                    setEndDate(new Date());
-                  }}
-                >
-                  Última semana
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setStartDate(subDays(new Date(), 30));
-                    setEndDate(new Date());
-                  }}
-                >
-                  Último mes
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const now = new Date();
-                    setStartDate(new Date(now.getFullYear(), now.getMonth(), 1));
-                    setEndDate(now);
-                  }}
-                >
-                  Este mes
-                </Button>
+              <div className="flex flex-col md:flex-row gap-2 flex-1">
+                <div className="flex-1 max-w-md">
+                  <DateRangePicker date={dateRange} setDate={setDateRange} />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setDateRange({
+                        from: subDays(new Date(), 7),
+                        to: new Date(),
+                      });
+                    }}
+                  >
+                    Última semana
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setDateRange({
+                        from: subDays(new Date(), 30),
+                        to: new Date(),
+                      });
+                    }}
+                  >
+                    Último mes
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const now = new Date();
+                      setDateRange({
+                        from: new Date(now.getFullYear(), now.getMonth(), 1),
+                        to: now,
+                      });
+                    }}
+                  >
+                    Este mes
+                  </Button>
+                </div>
               </div>
             </div>
           </GlassCard>

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, User, Bell, Palette, Info } from 'lucide-react';
+import { Settings as SettingsIcon, User, Palette, Info } from 'lucide-react';
 import GlassCard from '@/components/GlassCard';
 import NavigationMenu from '@/components/NavigationMenu';
 import { useAuth } from '@/_core/hooks/useAuth';
@@ -89,29 +89,7 @@ const Settings = () => {
           </GlassCard>
         </motion.div>
 
-        {/* Notifications */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
-          <GlassCard className="p-6 mb-6" hover={false}>
-            <h2 className="text-xl font-bold text-emerald-800 mb-4 flex items-center gap-2">
-              <Bell className="w-5 h-5" /> Notificaciones
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-white/50 rounded-xl">
-                <div>
-                  <p className="font-semibold text-emerald-900">Alertas de rendimiento</p>
-                  <p className="text-sm text-emerald-600">Recibe notificaciones sobre estadísticas</p>
-                </div>
-                <div className="w-11 h-6 bg-emerald-500 rounded-full relative">
-                  <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full" />
-                </div>
-              </div>
-            </div>
-          </GlassCard>
-        </motion.div>
+
 
         {/* About */}
         <motion.div
