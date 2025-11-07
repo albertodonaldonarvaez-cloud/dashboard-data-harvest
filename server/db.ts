@@ -1,6 +1,20 @@
-import { eq } from "drizzle-orm";
+import { eq, desc, and, gte, lte, sql, like } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { 
+  InsertUser, 
+  users, 
+  harvests, 
+  InsertHarvest, 
+  Harvest,
+  harvestAttachments,
+  InsertHarvestAttachment,
+  HarvestAttachment,
+  userPermissions,
+  InsertUserPermission,
+  UserPermission,
+  activityLogs,
+  InsertActivityLog
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -17,6 +31,8 @@ export async function getDb() {
   }
   return _db;
 }
+
+// ============= USER OPERATIONS =============
 
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) {
@@ -89,4 +105,245 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(users).orderBy(desc(users.createdAt));
+}
+
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateUserRole(userId: number, role: "admin" | "editor" | "viewer" | "user") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(users).set({ role }).where(eq(users.id, userId));
+}
+
+// ============= HARVEST OPERATIONS =============
+
+export async function createHarvest(harvest: InsertHarvest): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(harvests).values(harvest);
+  return Number(result[0].insertId);
+}
+
+export async function getAllHarvests(filters?: {
+  startDate?: Date;
+  endDate?: Date;
+  parcela?: string;
+  tipoHigo?: string;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let query = db.select().from(harvests);
+  
+  const conditions = [];
+  if (filters?.startDate) {
+    conditions.push(gte(harvests.submissionTime, filters.startDate));
+  }
+  if (filters?.endDate) {
+    conditions.push(lte(harvests.submissionTime, filters.endDate));
+  }
+  if (filters?.parcela) {
+    conditions.push(like(harvests.parcela, `%${filters.parcela}%`));
+  }
+  if (filters?.tipoHigo) {
+    conditions.push(eq(harvests.tipoHigo, filters.tipoHigo));
+  }
+  
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
+  }
+  
+  return await query.orderBy(desc(harvests.submissionTime));
+}
+
+export async function getHarvestById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(harvests).where(eq(harvests.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateHarvest(id: number, data: Partial<InsertHarvest>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(harvests).set(data).where(eq(harvests.id, id));
+}
+
+export async function deleteHarvest(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(harvests).where(eq(harvests.id, id));
+}
+
+export async function getHarvestStats(filters?: {
+  startDate?: Date;
+  endDate?: Date;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const conditions = [];
+  if (filters?.startDate) {
+    conditions.push(gte(harvests.submissionTime, filters.startDate));
+  }
+  if (filters?.endDate) {
+    conditions.push(lte(harvests.submissionTime, filters.endDate));
+  }
+  
+  let query = db.select({
+    totalCajas: sql<number>`COUNT(*)`,
+    pesoTotal: sql<number>`SUM(${harvests.pesoCaja})`,
+    promedioPeso: sql<number>`AVG(${harvests.pesoCaja})`,
+  }).from(harvests);
+  
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
+  }
+  
+  const result = await query;
+  return result[0];
+}
+
+export async function getHarvestsByTipo(filters?: {
+  startDate?: Date;
+  endDate?: Date;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [];
+  if (filters?.startDate) {
+    conditions.push(gte(harvests.submissionTime, filters.startDate));
+  }
+  if (filters?.endDate) {
+    conditions.push(lte(harvests.submissionTime, filters.endDate));
+  }
+  
+  let query = db.select({
+    tipoHigo: harvests.tipoHigo,
+    count: sql<number>`COUNT(*)`,
+    pesoTotal: sql<number>`SUM(${harvests.pesoCaja})`,
+  }).from(harvests).groupBy(harvests.tipoHigo);
+  
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
+  }
+  
+  return await query;
+}
+
+export async function getHarvestsByParcela(filters?: {
+  startDate?: Date;
+  endDate?: Date;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [];
+  if (filters?.startDate) {
+    conditions.push(gte(harvests.submissionTime, filters.startDate));
+  }
+  if (filters?.endDate) {
+    conditions.push(lte(harvests.submissionTime, filters.endDate));
+  }
+  
+  let query = db.select({
+    parcela: harvests.parcela,
+    count: sql<number>`COUNT(*)`,
+    pesoTotal: sql<number>`SUM(${harvests.pesoCaja})`,
+  }).from(harvests).groupBy(harvests.parcela);
+  
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
+  }
+  
+  return await query.orderBy(desc(sql`COUNT(*)`));
+}
+
+// ============= ATTACHMENT OPERATIONS =============
+
+export async function createAttachment(attachment: InsertHarvestAttachment): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(harvestAttachments).values(attachment);
+  return Number(result[0].insertId);
+}
+
+export async function getAttachmentsByHarvestId(harvestId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(harvestAttachments)
+    .where(and(
+      eq(harvestAttachments.harvestId, harvestId),
+      eq(harvestAttachments.isDeleted, false)
+    ));
+}
+
+export async function deleteAttachment(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(harvestAttachments).set({ isDeleted: true }).where(eq(harvestAttachments.id, id));
+}
+
+// ============= PERMISSION OPERATIONS =============
+
+export async function getUserPermissions(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(userPermissions).where(eq(userPermissions.userId, userId));
+}
+
+export async function createPermission(permission: InsertUserPermission): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(userPermissions).values(permission);
+  return Number(result[0].insertId);
+}
+
+export async function deleteUserPermissions(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(userPermissions).where(eq(userPermissions.userId, userId));
+}
+
+// ============= ACTIVITY LOG OPERATIONS =============
+
+export async function logActivity(log: InsertActivityLog) {
+  const db = await getDb();
+  if (!db) return;
+  
+  try {
+    await db.insert(activityLogs).values(log);
+  } catch (error) {
+    console.error("[Database] Failed to log activity:", error);
+  }
+}
+
+export async function getActivityLogs(limit: number = 100) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(activityLogs).orderBy(desc(activityLogs.createdAt)).limit(limit);
+}

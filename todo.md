@@ -1,0 +1,63 @@
+# HarvestDash - Lista de Tareas del Proyecto
+
+## Base de Datos y Backend
+- [x] Configurar esquema de base de datos PostgreSQL con tablas: harvests, users, user_permissions, harvest_attachments
+- [x] Implementar modelos y helpers en server/db.ts para operaciones CRUD
+- [x] Crear procedimientos tRPC para harvests (list, getById, create, update, delete)
+- [x] Crear procedimientos tRPC para gestión de usuarios (list, create, update, delete, updatePermissions)
+- [x] Implementar sistema de permisos y roles (admin, editor, viewer)
+- [x] Crear procedimientos tRPC para imágenes (upload, list, delete)
+
+## Componentes Base y Diseño
+- [x] Configurar tema glassmorphism en index.css con paleta verde/esmeralda
+- [x] Crear componente GlassCard reutilizable con efectos de vidrio
+- [x] Crear componente NavigationMenu flotante inferior
+- [x] Configurar fuentes y estilos globales
+- [ ] Implementar layout principal con DashboardLayout
+
+## Dashboard Principal
+- [x] Crear página Dashboard con estadísticas agregadas
+- [x] Implementar filtros de fecha (DateFilter component)
+- [x] Crear tarjetas de estadísticas (peso total, número de cajas, por tipo de higo)
+- [x] Implementar gráficos de visualización (por parcela, por tipo, tendencias)
+- [x] Crear vista de lista de datos completa (DataList component)
+- [x] Implementar modal de detalles de cosecha (HarvestModal)
+- [x] Agregar visualización de imágenes en modal
+
+## Gestión de Usuarios y Permisos
+- [x] Crear página Settings para configuración
+- [x] Implementar sección de gestión de usuarios (crear, editar, eliminar)
+- [x] Crear formulario de creación/edición de usuarios
+- [x] Implementar sistema de asignación de permisos por usuario
+- [x] Agregar control de acceso basado en roles
+- [ ] Implementar filtros de recursos por usuario
+
+## Sistema de Imágenes
+- [x] Configurar carpetas large y small en S3
+- [ ] Implementar componente de carga de imágenes con preview
+- [x] Crear función de procesamiento de imágenes (resize para thumbnails)
+- [x] Implementar galería de imágenes en dashboard
+- [x] Crear lightbox/modal para visualización de imágenes en alta calidad
+- [ ] Optimizar carga de imágenes (lazy loading, progressive loading)
+
+## Responsive y Mobile
+- [x] Optimizar diseño de dashboard para tablets
+- [x] Adaptar navegación para dispositivos móviles
+- [x] Hacer tablas scrollables horizontalmente en móvil
+- [x] Optimizar tarjetas de estadísticas para pantallas pequeñas
+- [x] Ajustar modales y formularios para mobile
+- [ ] Implementar gestos touch para navegación
+
+## Datos y Migración
+- [x] Crear script de migración para importar datos del JSON
+- [x] Poblar tabla harvests con los 94 registros
+- [ ] Configurar usuarios iniciales (admin y viewers)
+- [x] Verificar integridad de datos importados
+
+## Testing y Optimización
+- [ ] Probar flujo completo de autenticación
+- [ ] Verificar permisos y control de acceso
+- [ ] Probar carga y visualización de imágenes
+- [ ] Verificar responsive en diferentes dispositivos
+- [ ] Optimizar rendimiento de consultas
+- [ ] Crear checkpoint final
