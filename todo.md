@@ -147,3 +147,12 @@
 - [x] Ocultar ícono de Usuarios en NavigationMenu para usuarios no-admin
 - [x] Eliminar sección de Apariencia en Settings
 - [x] Eliminar sección de Acerca de en Settings
+
+
+## Funcionalidades para Administrador
+- [x] Mejorar visibilidad de configuración de nombres de cortadoras en Settings
+- [x] Crear endpoint backend para importación de archivos JSON
+- [x] Validar estructura del JSON antes de importar
+- [x] Crear interfaz de importación de JSON en área de administrador
+- [x] Mostrar preview de datos antes de confirmar importación
+- [x] Agregar manejo de errores y feedback al usuario

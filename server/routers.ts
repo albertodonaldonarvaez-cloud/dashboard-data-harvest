@@ -487,6 +487,119 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
+  // ============= DATA IMPORT =============
+  import: router({
+    // Import harvests from JSON file
+    importJSON: adminProcedure
+      .input(z.object({
+        data: z.array(z.object({
+          escanea_la_parcela: z.string(),
+          peso_de_la_caja: z.number(),
+          numero_de_cortadora: z.string(),
+          numero_de_caja: z.string(),
+          tipo_de_higo: z.string(),
+          start: z.string().optional(),
+          foto_de_la_caja: z.string().optional(),
+          _attachments: z.array(z.any()).optional(),
+        })),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const results = {
+          success: 0,
+          failed: 0,
+          errors: [] as string[],
+        };
+
+        for (const item of input.data) {
+          try {
+            // Parse parcela (format: "367 -EL CHATO" or "232 -")
+            const parcela = item.escanea_la_parcela.split('-')[0].trim();
+            
+            // Parse fecha from start field or use current date
+            const submissionTime = item.start ? new Date(item.start) : new Date();
+            
+            // Determine tipo de higo based on numero_de_cortadora
+            let tipoHigo = item.tipo_de_higo;
+            if (item.numero_de_cortadora === '97') {
+              tipoHigo = 'primera_calidad';
+            } else if (item.numero_de_cortadora === '98') {
+              tipoHigo = 'segunda_calidad';
+            } else if (item.numero_de_cortadora === '99') {
+              tipoHigo = 'desperdicio';
+            }
+
+            // Create harvest record
+            await db.createHarvest({
+              parcela,
+              pesoCaja: item.peso_de_la_caja,
+              numeroCortadora: item.numero_de_cortadora,
+              numeroCaja: item.numero_de_caja,
+              tipoHigo,
+              submissionTime,
+              status: 'submitted_via_web',
+            });
+
+            results.success++;
+          } catch (error) {
+            results.failed++;
+            results.errors.push(`Error en registro ${item.numero_de_caja}: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+          }
+        }
+
+        await db.logActivity({
+          userId: ctx.user.id,
+          action: 'import_json',
+          details: JSON.stringify({
+            total: input.data.length,
+            success: results.success,
+            failed: results.failed,
+          }),
+        });
+
+        return results;
+      }),
+
+    // Validate JSON structure before import
+    validateJSON: adminProcedure
+      .input(z.object({
+        data: z.array(z.any()),
+      }))
+      .query(({ input }) => {
+        const validation = {
+          valid: 0,
+          invalid: 0,
+          errors: [] as string[],
+          preview: [] as any[],
+        };
+
+        input.data.slice(0, 10).forEach((item, index) => {
+          try {
+            // Check required fields
+            if (!item.escanea_la_parcela || !item.peso_de_la_caja || !item.numero_de_cortadora || !item.numero_de_caja) {
+              throw new Error('Faltan campos requeridos');
+            }
+
+            // Parse parcela
+            const parcela = item.escanea_la_parcela.split('-')[0].trim();
+            
+            validation.valid++;
+            validation.preview.push({
+              parcela,
+              peso: item.peso_de_la_caja,
+              cortadora: item.numero_de_cortadora,
+              caja: item.numero_de_caja,
+              tipo: item.tipo_de_higo,
+            });
+          } catch (error) {
+            validation.invalid++;
+            validation.errors.push(`Registro ${index + 1}: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+          }
+        });
+
+        return validation;
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
