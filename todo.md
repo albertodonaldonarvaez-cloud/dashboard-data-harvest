@@ -119,3 +119,12 @@
 - [x] Convertir resultados SQL de string a number en backend
 - [x] Actualizar formatWeight en frontend para manejar kg directamente
 - [x] Verificar que todos los datos se muestren correctamente
+
+
+## Corrección de Analytics y Visualización de Imágenes
+- [x] Diagnosticar por qué la tabla en Analytics no se actualiza
+- [x] Corregir conversión de peso en Analytics (eliminar división por 1000)
+- [x] Diagnosticar por qué no se muestran las imágenes (imágenes huérfanas)
+- [x] Limpiar 94 imágenes huérfanas de la base de datos
+- [ ] Implementar sincronización con KoboToolbox para descargar imágenes
+- [ ] Implementar visualización de imágenes en vista mosaico y modal
