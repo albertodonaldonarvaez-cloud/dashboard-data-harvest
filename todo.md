@@ -109,3 +109,7 @@
 ## Simplificación de Login
 - [x] Eliminar opción de OAuth (Manus OAuth) de la página de login
 - [x] Dejar solo formulario de email y contraseña
+
+
+## Optimización de Logout
+- [x] Hacer el botón de cerrar sesión más rápido con redirección inmediata

@@ -25,20 +25,14 @@ export function useAuth(options?: UseAuthOptions) {
   });
 
   const logout = useCallback(async () => {
-    try {
-      await logoutMutation.mutateAsync();
-    } catch (error: unknown) {
-      if (
-        error instanceof TRPCClientError &&
-        error.data?.code === "UNAUTHORIZED"
-      ) {
-        return;
-      }
-      throw error;
-    } finally {
-      utils.auth.me.setData(undefined, null);
-      await utils.auth.me.invalidate();
-    }
+    // Limpiar estado inmediatamente para UX rápida
+    utils.auth.me.setData(undefined, null);
+    
+    // Redirigir inmediatamente a login
+    window.location.href = '/login';
+    
+    // Llamar al backend en segundo plano (no esperar)
+    logoutMutation.mutate();
   }, [logoutMutation, utils]);
 
   const state = useMemo(() => {
