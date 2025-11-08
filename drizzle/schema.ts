@@ -97,3 +97,19 @@ export const activityLogs = mysqlTable("activity_logs", {
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
 export type InsertActivityLog = typeof activityLogs.$inferInsert;
+
+/**
+ * Cortadora configuration table - custom names for cortadoras
+ * Numbers 97, 98, 99 are NOT cortadoras (they represent harvest types)
+ */
+export const cortadoraConfig = mysqlTable("cortadora_config", {
+  id: int("id").autoincrement().primaryKey(),
+  numeroCortadora: varchar("numeroCortadora", { length: 50 }).notNull().unique(),
+  customName: varchar("customName", { length: 100 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CortadoraConfig = typeof cortadoraConfig.$inferSelect;
+export type InsertCortadoraConfig = typeof cortadoraConfig.$inferInsert;

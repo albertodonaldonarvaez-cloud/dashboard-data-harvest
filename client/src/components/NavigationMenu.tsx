@@ -27,6 +27,7 @@ const NavigationMenu = ({ className }: NavigationMenuProps) => {
         'fixed bottom-6 left-1/2 -translate-x-1/2 z-50',
         'glass rounded-full shadow-2xl px-6 py-3',
         'flex items-center gap-2',
+        'mx-4 max-w-[calc(100vw-2rem)]', // Add margin on mobile
         className
       )}
     >

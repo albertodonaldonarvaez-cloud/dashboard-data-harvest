@@ -1,14 +1,13 @@
 import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { format, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, TrendingUp, Package, Scale, MapPin } from 'lucide-react';
+import { Calendar, TrendingUp, Package, Scale, MapPin, Users } from 'lucide-react';
 import GlassCard from '@/components/GlassCard';
 import NavigationMenu from '@/components/NavigationMenu';
 import { DateRangePicker } from '@/components/DateRangePicker';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { DateRange } from 'react-day-picker';
 
@@ -24,21 +23,15 @@ const Dashboard = () => {
     endDate: dateRange?.to?.toISOString() || new Date().toISOString(),
   });
 
-  // Fetch harvests list
-  const { data: harvests, isLoading: harvestsLoading } = trpc.harvests.list.useQuery({
-    startDate: dateRange?.from?.toISOString() || subDays(new Date(), 7).toISOString(),
-    endDate: dateRange?.to?.toISOString() || new Date().toISOString(),
+  // Fetch top cortadoras
+  const { data: topCortadoras, isLoading: cortadorasLoading } = trpc.cortadoras.topCortadoras.useQuery({
+    limit: 5,
   });
 
   const formatWeight = (grams: number | null | undefined) => {
     if (!grams) return '0 kg';
     return `${(grams / 1000).toFixed(2)} kg`;
   };
-
-  const topParcelas = useMemo(() => {
-    if (!stats?.byParcela) return [];
-    return stats.byParcela.slice(0, 5);
-  }, [stats]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-emerald-50/30 to-green-50 relative overflow-hidden pb-24">
@@ -248,79 +241,57 @@ const Dashboard = () => {
             </GlassCard>
           </motion.div>
 
-          {/* Top Parcelas */}
+          {/* Top 5 Cortadoras */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.7 }}
           >
             <GlassCard className="p-6" hover={false}>
-              <h3 className="text-xl font-bold text-emerald-800 mb-4">Top 5 Parcelas</h3>
-              {statsLoading ? (
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-emerald-800 flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Top 5 Cortadoras
+                </h3>
+              </div>
+              {cortadorasLoading ? (
                 <div className="space-y-3">
-                  {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+                  {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-16 w-full" />)}
                 </div>
-              ) : (
+              ) : topCortadoras && topCortadoras.length > 0 ? (
                 <div className="space-y-3">
-                  {topParcelas.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-white/50 rounded-xl">
-                      <div>
-                        <p className="font-semibold text-green-900">{item.parcela}</p>
-                        <p className="text-sm text-green-600">{item.count} cajas</p>
+                  {topCortadoras.map((item, index) => (
+                    <div key={index} className="p-4 bg-white/50 rounded-xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <p className="font-bold text-green-900">
+                            {item.customName || `Cortadora ${item.numeroCortadora}`}
+                          </p>
+                          {item.customName && (
+                            <p className="text-xs text-green-600">#{item.numeroCortadora}</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-green-700">
+                            {formatWeight(item.pesoTotal)}
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-lg font-bold text-green-700">
-                        {formatWeight(item.pesoTotal)}
-                      </p>
+                      <div className="flex items-center justify-between text-sm text-green-600">
+                        <span>{item.count} cajas</span>
+                        <span>Promedio: {formatWeight(item.pesoPromedio)}</span>
+                      </div>
                     </div>
                   ))}
+                </div>
+              ) : (
+                <div className="text-center text-emerald-600 py-8">
+                  No hay datos de cortadoras disponibles
                 </div>
               )}
             </GlassCard>
           </motion.div>
         </div>
-
-        {/* Recent Harvests */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-        >
-          <GlassCard className="p-6" hover={false}>
-            <h3 className="text-xl font-bold text-emerald-800 mb-4">Cosechas Recientes</h3>
-            {harvestsLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-16 w-full" />)}
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
-                {harvests?.slice(0, 10).map((harvest) => (
-                  <div
-                    key={harvest.id}
-                    className="flex items-center justify-between p-4 bg-white/50 rounded-xl hover:bg-white/70 transition-all"
-                  >
-                    <div className="flex-1">
-                      <p className="font-semibold text-emerald-900">{harvest.parcela}</p>
-                      <p className="text-sm text-emerald-600">
-                        Caja: {harvest.numeroCaja} | Cortadora: {harvest.numeroCortadora}
-                      </p>
-                      <p className="text-xs text-emerald-500 capitalize">{harvest.tipoHigo}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-emerald-700">
-                        {formatWeight(harvest.pesoCaja)}
-                      </p>
-                      {harvest.submissionTime && (
-                        <p className="text-xs text-emerald-500">
-                          {format(new Date(harvest.submissionTime), 'dd/MM HH:mm', { locale: es })}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </GlassCard>
-        </motion.div>
       </div>
 
       <NavigationMenu />

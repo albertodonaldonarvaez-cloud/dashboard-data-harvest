@@ -15,6 +15,13 @@
       "when": 1762552180774,
       "tag": "0001_worried_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1762562342691,
+      "tag": "0002_legal_preak",
+      "breakpoints": true
     }
   ]
 }

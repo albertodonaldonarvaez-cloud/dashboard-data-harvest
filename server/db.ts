@@ -347,3 +347,135 @@ export async function getActivityLogs(limit: number = 100) {
   
   return await db.select().from(activityLogs).orderBy(desc(activityLogs.createdAt)).limit(limit);
 }
+
+
+// ============= CORTADORA CONFIGURATION OPERATIONS =============
+
+import { cortadoraConfig, InsertCortadoraConfig, CortadoraConfig } from "../drizzle/schema";
+
+export async function getAllCortadoras(): Promise<CortadoraConfig[]> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get cortadoras: database not available");
+    return [];
+  }
+
+  try {
+    const result = await db.select().from(cortadoraConfig).orderBy(cortadoraConfig.numeroCortadora);
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to get cortadoras:", error);
+    return [];
+  }
+}
+
+export async function getCortadoraByNumber(numero: string): Promise<CortadoraConfig | undefined> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get cortadora: database not available");
+    return undefined;
+  }
+
+  try {
+    const result = await db.select().from(cortadoraConfig)
+      .where(eq(cortadoraConfig.numeroCortadora, numero))
+      .limit(1);
+    return result[0];
+  } catch (error) {
+    console.error("[Database] Failed to get cortadora:", error);
+    return undefined;
+  }
+}
+
+export async function upsertCortadora(data: InsertCortadoraConfig): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot upsert cortadora: database not available");
+    return;
+  }
+
+  try {
+    await db.insert(cortadoraConfig)
+      .values(data)
+      .onDuplicateKeyUpdate({
+        set: {
+          customName: data.customName,
+          isActive: data.isActive !== undefined ? data.isActive : true,
+        },
+      });
+  } catch (error) {
+    console.error("[Database] Failed to upsert cortadora:", error);
+    throw error;
+  }
+}
+
+export async function deleteCortadora(numero: string): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot delete cortadora: database not available");
+    return;
+  }
+
+  try {
+    await db.delete(cortadoraConfig)
+      .where(eq(cortadoraConfig.numeroCortadora, numero));
+  } catch (error) {
+    console.error("[Database] Failed to delete cortadora:", error);
+    throw error;
+  }
+}
+
+// Get top cortadoras with stats (excluding 97, 98, 99)
+export async function getTopCortadoras(limit: number = 5): Promise<Array<{
+  numeroCortadora: string;
+  customName: string | null;
+  count: number;
+  pesoTotal: number;
+  pesoPromedio: number;
+}>> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get top cortadoras: database not available");
+    return [];
+  }
+
+  try {
+    // Get all harvests excluding 97, 98, 99
+    const allHarvests = await db.select().from(harvests);
+    
+    const cortadoraStats: Record<string, { count: number; pesoTotal: number }> = {};
+    
+    allHarvests.forEach(h => {
+      const numero = h.numeroCortadora;
+      if (!numero || numero === '97' || numero === '98' || numero === '99') return;
+      
+      if (!cortadoraStats[numero]) {
+        cortadoraStats[numero] = { count: 0, pesoTotal: 0 };
+      }
+      
+      cortadoraStats[numero].count += 1;
+      cortadoraStats[numero].pesoTotal += h.pesoCaja || 0;
+    });
+    
+    // Get custom names
+    const configs = await getAllCortadoras();
+    const configMap = new Map(configs.map(c => [c.numeroCortadora, c.customName]));
+    
+    // Convert to array and sort by peso total
+    const results = Object.entries(cortadoraStats)
+      .map(([numero, stats]) => ({
+        numeroCortadora: numero,
+        customName: configMap.get(numero) || null,
+        count: stats.count,
+        pesoTotal: stats.pesoTotal,
+        pesoPromedio: stats.count > 0 ? stats.pesoTotal / stats.count : 0,
+      }))
+      .sort((a, b) => b.pesoTotal - a.pesoTotal)
+      .slice(0, limit);
+    
+    return results;
+  } catch (error) {
+    console.error("[Database] Failed to get top cortadoras:", error);
+    return [];
+  }
+}

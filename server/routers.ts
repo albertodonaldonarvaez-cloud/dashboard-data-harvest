@@ -313,6 +313,58 @@ export const appRouter = router({
         return await db.getActivityLogs(input?.limit);
       }),
   }),
+
+  // ============= CORTADORA CONFIGURATION =============
+  cortadoras: router({
+    list: protectedProcedure
+      .query(async () => {
+        return await db.getAllCortadoras();
+      }),
+
+    topCortadoras: protectedProcedure
+      .input(z.object({ limit: z.number().optional() }).optional())
+      .query(async ({ input }) => {
+        return await db.getTopCortadoras(input?.limit || 5);
+      }),
+
+    upsert: adminProcedure
+      .input(z.object({
+        numeroCortadora: z.string(),
+        customName: z.string().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        await db.upsertCortadora({
+          numeroCortadora: input.numeroCortadora,
+          customName: input.customName,
+          isActive: input.isActive,
+        });
+
+        await db.logActivity({
+          userId: ctx.user.id,
+          action: 'upsert_cortadora',
+          resourceType: 'cortadora',
+          details: JSON.stringify(input),
+        });
+
+        return { success: true };
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ numeroCortadora: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        await db.deleteCortadora(input.numeroCortadora);
+
+        await db.logActivity({
+          userId: ctx.user.id,
+          action: 'delete_cortadora',
+          resourceType: 'cortadora',
+          details: JSON.stringify(input),
+        });
+
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

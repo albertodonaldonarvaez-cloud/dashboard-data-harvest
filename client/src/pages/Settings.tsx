@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, User, Palette, Info } from 'lucide-react';
+import { Settings as SettingsIcon, User, Palette, Info, Users } from 'lucide-react';
 import GlassCard from '@/components/GlassCard';
 import NavigationMenu from '@/components/NavigationMenu';
 import { useAuth } from '@/_core/hooks/useAuth';
@@ -28,15 +28,42 @@ const Settings = () => {
           </GlassCard>
         </motion.div>
 
-        {/* User Profile */}
+        {/* User        {/* Admin Section */}
+        {user?.role === 'admin' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <GlassCard className="p-6 mb-6" hover={false}>
+              <h2 className="text-xl font-bold text-emerald-800 mb-4">Administración</h2>
+              <div className="space-y-3">
+                <a href="/cortadoras">
+                  <div className="flex items-center justify-between p-4 bg-white/50 rounded-xl hover:bg-white/70 transition-all cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <Users className="w-5 h-5 text-emerald-600" />
+                      <div>
+                        <p className="font-semibold text-emerald-900">Configurar Cortadoras</p>
+                        <p className="text-sm text-emerald-600">Asignar nombres personalizados</p>
+                      </div>
+                    </div>
+                    <span className="text-emerald-400">→</span>
+                  </div>
+                </a>
+              </div>
+            </GlassCard>
+          </motion.div>
+        )}
+
+        {/* Profile */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
+          transition={{ duration: 0.6, delay: user?.role === 'admin' ? 0.3 : 0.2 }}
         >
           <GlassCard className="p-6 mb-6" hover={false}>
             <h2 className="text-xl font-bold text-emerald-800 mb-4 flex items-center gap-2">
-              <User className="w-5 h-5" /> Perfil de Usuario
+              <User className="w-5 h-5" /> Perfil
             </h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-white/50 rounded-xl">

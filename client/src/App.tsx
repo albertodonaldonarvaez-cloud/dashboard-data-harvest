@@ -9,6 +9,7 @@ import DataList from "./pages/DataList";
 import Analytics from "./pages/Analytics";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
+import CortadorasConfig from "./pages/CortadorasConfig";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -18,6 +19,7 @@ function Router() {
       <Route path={"/analytics"} component={Analytics} />
       <Route path={"/data"} component={DataList} />
       <Route path={"/users"} component={Users} />
+      <Route path={"/cortadoras"} component={CortadorasConfig} />
       <Route path={"/settings"} component={Settings} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

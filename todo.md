@@ -81,3 +81,14 @@
 - [x] Crear gráficas de barras para vista de un día
 - [x] Crear gráficas de líneas para vista de semanas/meses
 - [x] Implementar análisis de rendimiento por calidad en gráficas
+
+
+## Nuevas Mejoras Solicitadas
+- [x] Quitar sección de cosechas recientes en Dashboard
+- [x] Cambiar Top 5 Parcelas por Top 5 Cortadoras en Dashboard
+- [x] Mostrar número de cajas, peso total y peso promedio en Top 5 Cortadoras
+- [x] Excluir números 97, 98, 99 del conteo de cortadoras (son tipos de higo)
+- [x] Crear tabla en base de datos para nombres personalizados de cortadoras
+- [x] Implementar API para gestionar nombres de cortadoras
+- [x] Crear interfaz de configuración de cortadoras para super admin
+- [x] Corregir responsive de barra flotante (agregar espacio en bordes móvil)
