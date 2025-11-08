@@ -36,7 +36,9 @@ export interface ProcessedSubmission {
   longitud?: string;
   status: string;
   submittedBy?: string;
-  imageUrls?: {
+  imageUrls?: string[]; // Array of image URLs from KoboToolbox attachments
+  // Deprecated fields (kept for backward compatibility):
+  _imageUrls?: {
     large?: string;
     small?: string;
   };
@@ -134,14 +136,15 @@ export function processKoboSubmission(submission: KoboSubmission): ProcessedSubm
     }
     parcela = parcela.trim();
 
-    // 7. Extract image URLs if available
-    let imageUrls: { large?: string; small?: string } | undefined;
-    if (submission._attachments && submission._attachments.length > 0) {
-      const attachment = submission._attachments[0]; // Use first attachment
-      imageUrls = {
-        large: attachment.download_large_url,
-        small: attachment.download_small_url,
-      };
+    // Extract image URLs if available
+    let imageUrls: string[] = [];
+    const attachments = submission._attachments;
+    if (attachments && attachments.length > 0) {
+      // Collect all image attachment URLs
+      imageUrls = attachments
+        .filter((att: any) => att.mimetype?.startsWith('image/'))
+        .map((att: any) => att.download_url || att.download_large_url)
+        .filter(Boolean);
     }
 
     return {
@@ -218,6 +221,7 @@ export async function fetchKoboSubmissions(
 
 /**
  * Get the default KoboToolbox configuration from environment
+ * Falls back to environment variables if database config not available
  */
 export function getDefaultKoboConfig(): KoboConfig {
   return {
@@ -225,4 +229,28 @@ export function getDefaultKoboConfig(): KoboConfig {
     assetId: process.env.KOBO_ASSET_ID || 'aDePEqzfzdqSRjPvn5gqNY',
     token: process.env.KOBO_API_TOKEN || '',
   };
+}
+
+/**
+ * Get KoboToolbox configuration from database
+ * Returns null if no configuration is saved
+ */
+export async function getKoboConfigFromDB(): Promise<KoboConfig | null> {
+  try {
+    const db = await import('./db');
+    const config = await db.getKoboConfig();
+    
+    if (!config || !config.apiToken) {
+      return null;
+    }
+
+    return {
+      apiUrl: config.apiUrl,
+      assetId: config.assetId,
+      token: config.apiToken,
+    };
+  } catch (error) {
+    console.error('Error loading Kobo config from database:', error);
+    return null;
+  }
 }

@@ -167,3 +167,13 @@
 - [x] Crear interfaz de sincronización en dashboard admin
 - [x] Mostrar estado de última sincronización y logs
 - [ ] Implementar sincronización automática programada (opcional)
+
+
+## Configuración Personalizada de KoboToolbox e Imágenes
+- [x] Crear tabla de configuración de KoboToolbox en base de datos
+- [x] Implementar endpoints para guardar/obtener configuración de KoboToolbox
+- [x] Crear interfaz de configuración de credenciales en Settings (API Token, API URL, Asset ID)
+- [x] Implementar descarga automática de imágenes desde KoboToolbox
+- [x] Subir imágenes descargadas a S3 (carpetas large y small)
+- [x] Guardar URLs de imágenes en tabla harvest_attachments
+- [x] Actualizar sincronización para procesar imágenes automáticamente

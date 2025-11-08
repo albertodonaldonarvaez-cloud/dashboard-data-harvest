@@ -114,3 +114,20 @@ export const cortadoraConfig = mysqlTable("cortadora_config", {
 
 export type CortadoraConfig = typeof cortadoraConfig.$inferSelect;
 export type InsertCortadoraConfig = typeof cortadoraConfig.$inferInsert;
+
+/**
+ * KoboToolbox API configuration table
+ * Stores API credentials and settings for synchronization
+ */
+export const koboConfig = mysqlTable("kobo_config", {
+  id: int("id").autoincrement().primaryKey(),
+  apiUrl: varchar("apiUrl", { length: 255 }).notNull().default('https://kf.smart-harvest.tecti-cloud.com'),
+  assetId: varchar("assetId", { length: 100 }).notNull(),
+  apiToken: text("apiToken").notNull(),
+  lastSyncTime: timestamp("lastSyncTime"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type KoboConfig = typeof koboConfig.$inferSelect;
+export type InsertKoboConfig = typeof koboConfig.$inferInsert;

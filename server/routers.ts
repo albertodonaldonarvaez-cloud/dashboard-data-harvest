@@ -610,12 +610,13 @@ export const appRouter = router({
         sinceDate: z.string().optional(), // ISO date string
       }))
       .mutation(async ({ input }) => {
-        const { fetchKoboSubmissions, processKoboSubmission, getDefaultKoboConfig } = await import('./kobo-client');
+        const { fetchKoboSubmissions, processKoboSubmission, getKoboConfigFromDB } = await import('./kobo-client');
         const db = await import('./db');
         
-        const config = getDefaultKoboConfig();
+        // Try to get config from database first
+        const config = await getKoboConfigFromDB();
         
-        if (!config.token) {
+        if (!config || !config.token) {
           throw new TRPCError({
             code: 'PRECONDITION_FAILED',
             message: 'KoboToolbox API token no configurado. Agrega KOBO_API_TOKEN en las variables de entorno.',
@@ -653,7 +654,7 @@ export const appRouter = router({
               }
 
               // Create harvest record
-              await db.createHarvest({
+              const harvestId = await db.createHarvest({
                 parcela: processed.parcela,
                 pesoCaja: processed.pesoCaja,
                 numeroCortadora: processed.numeroCortadora,
@@ -666,6 +667,29 @@ export const appRouter = router({
                 submittedBy: processed.submittedBy,
               });
 
+              // Process and upload images if available
+              if (processed.imageUrls && processed.imageUrls.length > 0) {
+                try {
+                  const { processHarvestImages } = await import('./image-processor');
+                  const imageResults = await processHarvestImages(processed.imageUrls, harvestId);
+                  
+                  // Save image URLs to database
+                  for (const img of imageResults) {
+                    await db.createAttachment({
+                      harvestId,
+                      filename: `image-${Date.now()}.jpg`,
+                      mimetype: 'image/jpeg',
+                      originalUrl: img.originalUrl,
+                      largeUrl: img.largeUrl,
+                      smallUrl: img.smallUrl,
+                    });
+                  }
+                } catch (imgError) {
+                  console.error(`Failed to process images for harvest ${harvestId}:`, imgError);
+                  // Don't fail the entire sync if image processing fails
+                }
+              }
+
               results.success++;
             } catch (error) {
               results.failed++;
@@ -673,6 +697,9 @@ export const appRouter = router({
             }
           }
 
+          // Update last sync time
+          await db.updateLastSyncTime();
+          
           return results;
         } catch (error) {
           throw new TRPCError({
@@ -680,6 +707,39 @@ export const appRouter = router({
             message: `Error al sincronizar con KoboToolbox: ${error instanceof Error ? error.message : 'Error desconocido'}`,
           });
         }
+      }),
+
+    // Get KoboToolbox configuration
+    getConfig: adminProcedure.query(async () => {
+      const db = await import('./db');
+      const config = await db.getKoboConfig();
+      
+      if (!config) {
+        return null;
+      }
+
+      // Don't send the full API token to the frontend for security
+      return {
+        id: config.id,
+        apiUrl: config.apiUrl,
+        assetId: config.assetId,
+        apiTokenPreview: config.apiToken ? `${config.apiToken.substring(0, 8)}...` : '',
+        hasApiToken: !!config.apiToken,
+        lastSyncTime: config.lastSyncTime,
+      };
+    }),
+
+    // Save KoboToolbox configuration
+    saveConfig: adminProcedure
+      .input(z.object({
+        apiUrl: z.string().url(),
+        assetId: z.string().min(1),
+        apiToken: z.string().min(1),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await import('./db');
+        await db.saveKoboConfig(input);
+        return { success: true };
       }),
 
     // Test connection to KoboToolbox API

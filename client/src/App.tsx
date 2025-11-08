@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import Import from "@/pages/Import";
-import Sync from "@/pages/Sync";
+import Sync from "./pages/Sync";
+import KoboConfig from "./pages/KoboConfig";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -34,6 +35,7 @@ function Router() {
               <Route path={"/settings"} component={Settings} />
               <Route path={"/import"} component={Import} />
               <Route path={"/sync"} component={Sync} />
+              <Route path={"/kobo-config"} component={KoboConfig} />
               <Route path={"/404"} component={NotFound} />            </Switch>
           </ProtectedRoute>
         )}

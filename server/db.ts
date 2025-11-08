@@ -479,3 +479,62 @@ export async function getTopCortadoras(limit: number = 5): Promise<Array<{
     return [];
   }
 }
+
+
+// ========== KoboToolbox Configuration ==========
+
+export async function getKoboConfig() {
+  const db = await getDb();
+  if (!db) return null;
+
+  const { koboConfig } = await import('../drizzle/schema');
+  const results = await db.select().from(koboConfig).limit(1);
+  return results.length > 0 ? results[0] : null;
+}
+
+export async function saveKoboConfig(config: {
+  apiUrl: string;
+  assetId: string;
+  apiToken: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+
+  const { koboConfig } = await import('../drizzle/schema');
+  
+  // Check if config exists
+  const existing = await getKoboConfig();
+  
+  if (existing) {
+    // Update existing config
+    await db.update(koboConfig)
+      .set({
+        apiUrl: config.apiUrl,
+        assetId: config.assetId,
+        apiToken: config.apiToken,
+        updatedAt: new Date(),
+      })
+      .where(eq(koboConfig.id, existing.id));
+  } else {
+    // Insert new config
+    await db.insert(koboConfig).values({
+      apiUrl: config.apiUrl,
+      assetId: config.assetId,
+      apiToken: config.apiToken,
+    });
+  }
+}
+
+export async function updateLastSyncTime() {
+  const db = await getDb();
+  if (!db) return;
+
+  const { koboConfig } = await import('../drizzle/schema');
+  const existing = await getKoboConfig();
+  
+  if (existing) {
+    await db.update(koboConfig)
+      .set({ lastSyncTime: new Date() })
+      .where(eq(koboConfig.id, existing.id));
+  }
+}
