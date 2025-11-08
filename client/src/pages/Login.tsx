@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
-import { APP_LOGO, APP_TITLE, getLoginUrl } from '@/const';
+import { APP_LOGO, APP_TITLE } from '@/const';
 import { useLocation } from 'wouter';
 
 const Login = () => {
@@ -37,9 +37,7 @@ const Login = () => {
     loginMutation.mutate({ email, password });
   };
 
-  const handleOAuthLogin = () => {
-    window.location.href = getLoginUrl();
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-emerald-50/30 to-green-50 relative overflow-hidden flex items-center justify-center p-4">
@@ -128,26 +126,6 @@ const Login = () => {
               )}
             </Button>
           </form>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-emerald-200" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white/50 text-emerald-600">O continúa con</span>
-            </div>
-          </div>
-
-          {/* OAuth Login */}
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleOAuthLogin}
-          >
-            Manus OAuth
-          </Button>
         </GlassCard>
 
         {/* Footer */}

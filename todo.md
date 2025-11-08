@@ -104,3 +104,8 @@
 - [x] Implementar funcionalidad de restablecimiento de contraseña por admin
 - [x] Agregar opción para que usuarios cambien su propia contraseña
 - [x] Actualizar sistema de sesiones para soportar ambos métodos de auth
+
+
+## Simplificación de Login
+- [x] Eliminar opción de OAuth (Manus OAuth) de la página de login
+- [x] Dejar solo formulario de email y contraseña
