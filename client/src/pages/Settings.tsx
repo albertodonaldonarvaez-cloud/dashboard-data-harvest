@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, User, Users, Key, Upload } from 'lucide-react';
+import { Settings as SettingsIcon, User, Users, Key, Upload, RefreshCw } from 'lucide-react';
 import { Link } from 'wouter';
 import GlassCard from '@/components/GlassCard';
 import NavigationMenu from '@/components/NavigationMenu';
@@ -46,6 +46,18 @@ const Settings = () => {
                       <div>
                         <p className="font-semibold text-emerald-900">Configurar Cortadoras</p>
                         <p className="text-sm text-emerald-600">Asignar nombres personalizados</p>
+                      </div>
+                    </div>
+                    <span className="text-emerald-400">→</span>
+                  </div>
+                </a>
+                <a href="/sync">
+                  <div className="flex items-center justify-between p-4 bg-white/50 rounded-xl hover:bg-white/70 transition-all cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <RefreshCw className="w-5 h-5 text-emerald-600" />
+                      <div>
+                        <p className="font-semibold text-emerald-900">Sincronizar con KoboToolbox</p>
+                        <p className="text-sm text-emerald-600">Importar datos automáticamente desde la API</p>
                       </div>
                     </div>
                     <span className="text-emerald-400">→</span>

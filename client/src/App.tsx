@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import Import from "@/pages/Import";
+import Sync from "@/pages/Sync";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -32,6 +33,7 @@ function Router() {
               <Route path={"/change-password"} component={ChangePassword} />
               <Route path={"/settings"} component={Settings} />
               <Route path={"/import"} component={Import} />
+              <Route path={"/sync"} component={Sync} />
               <Route path={"/404"} component={NotFound} />            </Switch>
           </ProtectedRoute>
         )}

@@ -156,3 +156,14 @@
 - [x] Crear interfaz de importación de JSON en área de administrador
 - [x] Mostrar preview de datos antes de confirmar importación
 - [x] Agregar manejo de errores y feedback al usuario
+
+
+## Sincronización Automática con KoboToolbox
+- [x] Analizar script de Python para entender procesamiento de datos
+- [x] Crear cliente de API de KoboToolbox en backend (TypeScript)
+- [x] Implementar procesamiento de datos crudos de KoboToolbox
+- [x] Crear endpoint de sincronización manual para admin
+- [ ] Agregar configuración de credenciales de API en Settings
+- [x] Crear interfaz de sincronización en dashboard admin
+- [x] Mostrar estado de última sincronización y logs
+- [ ] Implementar sincronización automática programada (opcional)

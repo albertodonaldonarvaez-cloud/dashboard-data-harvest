@@ -600,6 +600,116 @@ export const appRouter = router({
         return validation;
       }),
   }),
+
+  // KoboToolbox Synchronization
+  kobo: router({
+    // Sync submissions from KoboToolbox API
+    sync: adminProcedure
+      .input(z.object({
+        limit: z.number().optional(),
+        sinceDate: z.string().optional(), // ISO date string
+      }))
+      .mutation(async ({ input }) => {
+        const { fetchKoboSubmissions, processKoboSubmission, getDefaultKoboConfig } = await import('./kobo-client');
+        const db = await import('./db');
+        
+        const config = getDefaultKoboConfig();
+        
+        if (!config.token) {
+          throw new TRPCError({
+            code: 'PRECONDITION_FAILED',
+            message: 'KoboToolbox API token no configurado. Agrega KOBO_API_TOKEN en las variables de entorno.',
+          });
+        }
+
+        const results = {
+          success: 0,
+          failed: 0,
+          skipped: 0,
+          errors: [] as string[],
+        };
+
+        try {
+          // Fetch submissions from KoboToolbox
+          const options: any = {};
+          if (input.limit) {
+            options.limit = input.limit;
+          }
+          if (input.sinceDate) {
+            options.since = new Date(input.sinceDate);
+          }
+
+          const submissions = await fetchKoboSubmissions(config, options);
+
+          // Process and import each submission
+          for (const submission of submissions) {
+            try {
+              const processed = processKoboSubmission(submission);
+              
+              if (!processed) {
+                results.skipped++;
+                results.errors.push(`Submission ${submission._id}: Datos inválidos o incompletos`);
+                continue;
+              }
+
+              // Create harvest record
+              await db.createHarvest({
+                parcela: processed.parcela,
+                pesoCaja: processed.pesoCaja,
+                numeroCortadora: processed.numeroCortadora,
+                numeroCaja: processed.numeroCaja,
+                tipoHigo: processed.tipoHigo,
+                submissionTime: processed.submissionTime,
+                latitud: processed.latitud,
+                longitud: processed.longitud,
+                status: processed.status,
+                submittedBy: processed.submittedBy,
+              });
+
+              results.success++;
+            } catch (error) {
+              results.failed++;
+              results.errors.push(`Submission ${submission._id}: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+            }
+          }
+
+          return results;
+        } catch (error) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: `Error al sincronizar con KoboToolbox: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+          });
+        }
+      }),
+
+    // Test connection to KoboToolbox API
+    testConnection: adminProcedure.query(async () => {
+      const { fetchKoboSubmissions, getDefaultKoboConfig } = await import('./kobo-client');
+      
+      const config = getDefaultKoboConfig();
+      
+      if (!config.token) {
+        return {
+          success: false,
+          message: 'KoboToolbox API token no configurado',
+        };
+      }
+
+      try {
+        // Try to fetch just 1 submission to test connection
+        await fetchKoboSubmissions(config, { limit: 1 });
+        return {
+          success: true,
+          message: 'Conexión exitosa con KoboToolbox API',
+        };
+      } catch (error) {
+        return {
+          success: false,
+          message: `Error de conexión: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+        };
+      }
+    }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
