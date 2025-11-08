@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
@@ -9,15 +9,21 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
-      setLocation('/login');
+    // Solo redirigir si ya terminó de cargar Y no hay usuario
+    if (!loading) {
+      setHasChecked(true);
+      if (!user && location !== '/login') {
+        setLocation('/login');
+      }
     }
-  }, [user, loading, setLocation]);
+  }, [user, loading, location, setLocation]);
 
-  if (loading) {
+  // Mostrar loading mientras carga o mientras no ha verificado
+  if (loading || !hasChecked) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-white via-emerald-50/30 to-green-50 flex items-center justify-center">
         <div className="text-center">
@@ -28,6 +34,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
+  // Si ya verificó y no hay usuario, no renderizar nada (ya se redirigió)
   if (!user) {
     return null;
   }

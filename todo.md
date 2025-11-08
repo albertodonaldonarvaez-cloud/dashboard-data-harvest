@@ -120,3 +120,10 @@
 - [x] Cambiar procedures de visualización a protectedProcedure (permitir todos los usuarios autenticados)
 - [x] Mantener adminProcedure solo para operaciones de escritura/eliminación
 - [x] Verificar que viewers, editors y users puedan ver toda la información
+
+
+## Usuario Admin y Loop de Redirección
+- [x] Crear script para insertar usuario administrador con contraseña TecTi#2020
+- [x] Ejecutar script para crear usuario admin en base de datos
+- [x] Investigar loop de redirección en ProtectedRoute
+- [x] Corregir problema que causa recarga infinita al entrar con otro usuario
