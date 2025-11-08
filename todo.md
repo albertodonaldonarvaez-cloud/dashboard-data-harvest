@@ -128,3 +128,14 @@
 - [x] Limpiar 94 imágenes huérfanas de la base de datos
 - [ ] Implementar sincronización con KoboToolbox para descargar imágenes
 - [ ] Implementar visualización de imágenes en vista mosaico y modal
+
+
+## Preparación para GitHub y Deployment
+- [ ] Crear archivo .gitignore apropiado
+- [ ] Configurar repositorio Git
+- [ ] Crear README.md con documentación del proyecto
+- [ ] Crear INSTALL.md con guía de instalación paso a paso
+- [ ] Documentar variables de entorno en ENV.md
+- [ ] Crear guía de deployment para servidor de producción
+- [ ] Subir código a GitHub
+- [ ] Verificar que todo funcione correctamente
