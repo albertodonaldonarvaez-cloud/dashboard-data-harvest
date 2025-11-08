@@ -5,9 +5,10 @@ import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean 
  */
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
-  openId: varchar("openId", { length: 64 }).notNull().unique(),
+  openId: varchar("openId", { length: 64 }).unique(), // Made nullable for password-based auth
   name: text("name"),
-  email: varchar("email", { length: 320 }),
+  email: varchar("email", { length: 320 }).unique(), // Made unique for login
+  passwordHash: text("passwordHash"), // For password-based authentication
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin", "editor", "viewer"]).default("viewer").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

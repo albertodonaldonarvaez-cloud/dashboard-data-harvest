@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, User, Palette, Info, Users } from 'lucide-react';
+import { Settings as SettingsIcon, User, Palette, Info, Users, Key } from 'lucide-react';
+import { Link } from 'wouter';
 import GlassCard from '@/components/GlassCard';
 import NavigationMenu from '@/components/NavigationMenu';
 import { useAuth } from '@/_core/hooks/useAuth';
@@ -84,6 +85,19 @@ const Settings = () => {
                   <p className="font-semibold text-emerald-900 capitalize">{user?.role || 'viewer'}</p>
                 </div>
               </div>
+              
+              <Link href="/change-password">
+                <div className="flex items-center justify-between p-4 bg-white/50 rounded-xl hover:bg-white/70 transition-colors cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <Key className="w-5 h-5 text-emerald-600" />
+                    <div>
+                      <p className="font-semibold text-emerald-900">Cambiar Contraseña</p>
+                      <p className="text-sm text-emerald-600">Actualiza tu contraseña de acceso</p>
+                    </div>
+                  </div>
+                  <span className="text-emerald-500">›</span>
+                </div>
+              </Link>
             </div>
           </GlassCard>
         </motion.div>

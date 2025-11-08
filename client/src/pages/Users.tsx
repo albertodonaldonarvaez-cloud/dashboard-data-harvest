@@ -1,26 +1,20 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users as UsersIcon, Shield, Edit, Trash2, Plus, UserPlus } from 'lucide-react';
+import { Users as UsersIcon, UserPlus, Trash2, Shield, Key, Eye, EyeOff, Edit } from 'lucide-react';
 import GlassCard from '@/components/GlassCard';
 import NavigationMenu from '@/components/NavigationMenu';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -30,80 +24,126 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const Users = () => {
   const { user: currentUser } = useAuth();
-  const [selectedUser, setSelectedUser] = useState<number | null>(null);
-  const [newRole, setNewRole] = useState<'admin' | 'editor' | 'viewer' | 'user'>('viewer');
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [deleteUserId, setDeleteUserId] = useState<number | null>(null);
-  
-  // Create user form state
-  const [newUserData, setNewUserData] = useState({
-    name: '',
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
+  const [editRoleDialogOpen, setEditRoleDialogOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedUserRole, setSelectedUserRole] = useState<'admin' | 'editor' | 'viewer' | 'user'>('viewer');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
+  // Form states
+  const [newUser, setNewUser] = useState({
     email: '',
+    password: '',
+    name: '',
     role: 'viewer' as 'admin' | 'editor' | 'viewer' | 'user',
   });
+  const [newPassword, setNewPassword] = useState('');
 
   const utils = trpc.useUtils();
 
   // Fetch users
   const { data: users, isLoading } = trpc.users.list.useQuery();
 
+  // Create user mutation
+  const createMutation = trpc.users.createWithPassword.useMutation({
+    onSuccess: () => {
+      toast.success('Usuario creado exitosamente');
+      utils.users.list.invalidate();
+      setCreateDialogOpen(false);
+      setNewUser({ email: '', password: '', name: '', role: 'viewer' });
+      setShowPassword(false);
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Error al crear usuario');
+    },
+  });
+
+  // Note: Delete user functionality removed for security
+  // Users should be deactivated by changing role instead
+
   // Update role mutation
   const updateRoleMutation = trpc.users.updateRole.useMutation({
     onSuccess: () => {
       toast.success('Rol actualizado exitosamente');
       utils.users.list.invalidate();
-      setSelectedUser(null);
+      setEditRoleDialogOpen(false);
+      setSelectedUserId(null);
     },
     onError: (error) => {
-      toast.error(error.message || 'Error al actualizar el rol');
+      toast.error(error.message || 'Error al actualizar rol');
     },
   });
 
-  const handleUpdateRole = () => {
-    if (selectedUser) {
-      updateRoleMutation.mutate({
-        userId: selectedUser,
-        role: newRole,
-      });
-    }
-  };
+  // Reset password mutation
+  const resetPasswordMutation = trpc.users.resetPassword.useMutation({
+    onSuccess: () => {
+      toast.success('Contraseña restablecida exitosamente');
+      setResetPasswordDialogOpen(false);
+      setSelectedUserId(null);
+      setNewPassword('');
+      setShowNewPassword(false);
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Error al restablecer contraseña');
+    },
+  });
 
   const handleCreateUser = () => {
-    if (!newUserData.name || !newUserData.email) {
-      toast.error('Por favor completa todos los campos');
+    if (!newUser.email || !newUser.password) {
+      toast.error('Email y contraseña son requeridos');
       return;
     }
 
-    // In a real system, this would call a backend endpoint
-    // For now, we'll show a message that users are created via OAuth
-    toast.info('Los usuarios se crean automáticamente al iniciar sesión por primera vez. Puedes cambiar su rol después.');
-    setShowCreateDialog(false);
-    setNewUserData({ name: '', email: '', role: 'viewer' });
+    if (newUser.password.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    createMutation.mutate(newUser);
   };
 
-  const handleDeleteUser = () => {
-    if (!deleteUserId) return;
+  const handleDeleteUser = (userId: number, userName: string) => {
+    toast.info('Por seguridad, la eliminación de usuarios está deshabilitada. Cambia el rol a "viewer" para restringir acceso.');
+  };
 
-    // In a real system, this would call a backend endpoint
-    toast.info('La eliminación de usuarios está deshabilitada por seguridad. Puedes cambiar su rol a "viewer" para restringir acceso.');
-    setDeleteUserId(null);
+  const handleUpdateRole = () => {
+    if (!selectedUserId) return;
+
+    updateRoleMutation.mutate({
+      userId: selectedUserId,
+      role: selectedUserRole,
+    });
+  };
+
+  const handleResetPassword = () => {
+    if (!selectedUserId) return;
+
+    if (newPassword.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    resetPasswordMutation.mutate({
+      userId: selectedUserId,
+      newPassword,
+    });
   };
 
   const getRoleBadge = (role: string) => {
@@ -116,13 +156,9 @@ const Users = () => {
 
     return (
       <Badge variant={variants[role] || 'outline'} className="capitalize">
-        {role}
+        {role === 'admin' ? 'Administrador' : role === 'editor' ? 'Editor' : role === 'viewer' ? 'Visor' : 'Usuario'}
       </Badge>
     );
-  };
-
-  const getRoleIcon = (role: string) => {
-    return <Shield className="w-4 h-4 mr-2" />;
   };
 
   if (currentUser?.role !== 'admin') {
@@ -149,12 +185,25 @@ const Users = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <GlassCard className="p-6 mb-6 text-center" hover={false}>
-            <UsersIcon className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mb-2">
-              Gestión de Usuarios
-            </h1>
-            <p className="text-emerald-700">Administra roles y permisos de usuarios</p>
+          <GlassCard className="p-6 mb-6" hover={false}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <UsersIcon className="w-8 h-8 text-emerald-500" />
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+                    Gestión de Usuarios
+                  </h1>
+                  <p className="text-emerald-700">Administra usuarios y permisos del sistema</p>
+                </div>
+              </div>
+              <Button
+                onClick={() => setCreateDialogOpen(true)}
+                className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600"
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Crear Usuario
+              </Button>
+            </div>
           </GlassCard>
         </motion.div>
 
@@ -165,16 +214,6 @@ const Users = () => {
           transition={{ duration: 0.6, delay: 0.1 }}
         >
           <GlassCard className="p-6" hover={false}>
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-emerald-800">
-                {users?.length || 0} usuarios registrados
-              </h3>
-              <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
-                <Plus className="w-4 h-4" />
-                Agregar Usuario
-              </Button>
-            </div>
-
             <div className="overflow-x-auto custom-scrollbar">
               <Table>
                 <TableHeader>
@@ -200,13 +239,17 @@ const Users = () => {
                   ) : users && users.length > 0 ? (
                     users.map((user) => (
                       <TableRow key={user.id} className="hover:bg-white/50">
-                        <TableCell className="font-medium">{user.name || '-'}</TableCell>
-                        <TableCell>{user.email || '-'}</TableCell>
-                        <TableCell>{getRoleBadge(user.role)}</TableCell>
+                        <TableCell className="font-medium text-emerald-900">
+                          {user.name || 'Sin nombre'}
+                        </TableCell>
+                        <TableCell className="text-emerald-700">
+                          {user.email || 'Sin email'}
+                        </TableCell>
                         <TableCell>
-                          {user.lastSignedIn 
-                            ? new Date(user.lastSignedIn).toLocaleDateString('es-ES')
-                            : '-'}
+                          {getRoleBadge(user.role)}
+                        </TableCell>
+                        <TableCell className="text-emerald-600 text-sm">
+                          {user.lastSignedIn ? format(new Date(user.lastSignedIn), 'dd MMM yyyy', { locale: es }) : 'Nunca'}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
@@ -214,22 +257,36 @@ const Users = () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                setSelectedUser(user.id);
-                                setNewRole(user.role);
+                                setSelectedUserId(user.id);
+                                setSelectedUserRole(user.role);
+                                setEditRoleDialogOpen(true);
                               }}
-                              disabled={user.id === currentUser.id}
+                              title="Editar rol"
+                              disabled={user.id === currentUser?.id}
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit className="w-4 h-4 text-blue-600" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => setDeleteUserId(user.id)}
-                              disabled={user.id === currentUser.id}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => {
+                                setSelectedUserId(user.id);
+                                setResetPasswordDialogOpen(true);
+                              }}
+                              title="Restablecer contraseña"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Key className="w-4 h-4 text-orange-600" />
                             </Button>
+                            {user.id !== currentUser?.id && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteUser(user.id, user.name || user.email || 'usuario')}
+                                title="Eliminar usuario"
+                              >
+                                <Trash2 className="w-4 h-4 text-red-600" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -258,7 +315,7 @@ const Users = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 bg-white/50 rounded-xl">
                 <div className="flex items-center mb-2">
-                  {getRoleIcon('admin')}
+                  <Shield className="w-4 h-4 mr-2 text-red-600" />
                   <span className="font-semibold text-emerald-900">Administrador</span>
                 </div>
                 <p className="text-sm text-emerald-600">
@@ -267,7 +324,7 @@ const Users = () => {
               </div>
               <div className="p-4 bg-white/50 rounded-xl">
                 <div className="flex items-center mb-2">
-                  {getRoleIcon('editor')}
+                  <Shield className="w-4 h-4 mr-2 text-blue-600" />
                   <span className="font-semibold text-emerald-900">Editor</span>
                 </div>
                 <p className="text-sm text-emerald-600">
@@ -276,7 +333,7 @@ const Users = () => {
               </div>
               <div className="p-4 bg-white/50 rounded-xl">
                 <div className="flex items-center mb-2">
-                  {getRoleIcon('viewer')}
+                  <Shield className="w-4 h-4 mr-2 text-gray-600" />
                   <span className="font-semibold text-emerald-900">Visualizador</span>
                 </div>
                 <p className="text-sm text-emerald-600">
@@ -285,7 +342,7 @@ const Users = () => {
               </div>
               <div className="p-4 bg-white/50 rounded-xl">
                 <div className="flex items-center mb-2">
-                  {getRoleIcon('user')}
+                  <Shield className="w-4 h-4 mr-2 text-green-600" />
                   <span className="font-semibold text-emerald-900">Usuario</span>
                 </div>
                 <p className="text-sm text-emerald-600">
@@ -298,118 +355,172 @@ const Users = () => {
       </div>
 
       {/* Create User Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5" />
-              Agregar Nuevo Usuario
-            </DialogTitle>
+            <DialogTitle>Crear Nuevo Usuario</DialogTitle>
             <DialogDescription>
-              Los usuarios se crean automáticamente al iniciar sesión. Esta función es informativa.
+              Ingresa los datos del nuevo usuario con email y contraseña.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label htmlFor="name">Nombre completo</Label>
+              <Label htmlFor="name">Nombre</Label>
               <Input
                 id="name"
-                value={newUserData.name}
-                onChange={(e) => setNewUserData({ ...newUserData, name: e.target.value })}
-                placeholder="Juan Pérez"
+                value={newUser.name}
+                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                placeholder="Nombre completo"
               />
             </div>
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email *</Label>
               <Input
                 id="email"
                 type="email"
-                value={newUserData.email}
-                onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
-                placeholder="juan@ejemplo.com"
+                value={newUser.email}
+                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                placeholder="usuario@ejemplo.com"
+                required
               />
             </div>
             <div>
+              <Label htmlFor="password">Contraseña *</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </Button>
+              </div>
+            </div>
+            <div>
               <Label htmlFor="role">Rol</Label>
-              <Select 
-                value={newUserData.role} 
-                onValueChange={(value: any) => setNewUserData({ ...newUserData, role: value })}
-              >
+              <Select value={newUser.role} onValueChange={(value: any) => setNewUser({ ...newUser, role: value })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                  <SelectItem value="editor">Editor</SelectItem>
-                  <SelectItem value="viewer">Visualizador</SelectItem>
+                  <SelectItem value="viewer">Visor</SelectItem>
                   <SelectItem value="user">Usuario</SelectItem>
+                  <SelectItem value="editor">Editor</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleCreateUser}>
-              Entendido
+            <Button
+              onClick={handleCreateUser}
+              disabled={createMutation.isPending}
+              className="bg-gradient-to-r from-emerald-500 to-green-500"
+            >
+              {createMutation.isPending ? 'Creando...' : 'Crear Usuario'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Edit Role Dialog */}
-      <Dialog open={selectedUser !== null} onOpenChange={() => setSelectedUser(null)}>
+      <Dialog open={editRoleDialogOpen} onOpenChange={setEditRoleDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cambiar Rol de Usuario</DialogTitle>
+            <DialogDescription>
+              Selecciona el nuevo rol para el usuario.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <label className="text-sm font-medium mb-2 block">Seleccionar nuevo rol</label>
-            <Select value={newRole} onValueChange={(value: any) => setNewRole(value)}>
+            <Label htmlFor="newRole">Nuevo Rol</Label>
+            <Select value={selectedUserRole} onValueChange={(value: any) => setSelectedUserRole(value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="admin">Administrador</SelectItem>
-                <SelectItem value="editor">Editor</SelectItem>
-                <SelectItem value="viewer">Visualizador</SelectItem>
+                <SelectItem value="viewer">Visor</SelectItem>
                 <SelectItem value="user">Usuario</SelectItem>
+                <SelectItem value="editor">Editor</SelectItem>
+                <SelectItem value="admin">Administrador</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSelectedUser(null)}>
+            <Button variant="outline" onClick={() => setEditRoleDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button 
+            <Button
               onClick={handleUpdateRole}
               disabled={updateRoleMutation.isPending}
+              className="bg-gradient-to-r from-blue-500 to-blue-600"
             >
-              {updateRoleMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
+              {updateRoleMutation.isPending ? 'Actualizando...' : 'Actualizar Rol'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteUserId !== null} onOpenChange={() => setDeleteUserId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Por seguridad, la eliminación física de usuarios está deshabilitada. 
-              Se recomienda cambiar el rol a "viewer" para restringir el acceso.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteUser}>
-              Entendido
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Reset Password Dialog */}
+      <Dialog open={resetPasswordDialogOpen} onOpenChange={setResetPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Restablecer Contraseña</DialogTitle>
+            <DialogDescription>
+              Ingresa la nueva contraseña para el usuario seleccionado.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="newPassword">Nueva Contraseña *</Label>
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                >
+                  {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </Button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetPasswordDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleResetPassword}
+              disabled={resetPasswordMutation.isPending}
+              className="bg-gradient-to-r from-orange-500 to-orange-600"
+            >
+              {resetPasswordMutation.isPending ? 'Restableciendo...' : 'Restablecer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <NavigationMenu />
     </div>

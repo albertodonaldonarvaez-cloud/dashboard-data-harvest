@@ -6,6 +6,9 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import * as db from "./db";
 import { storagePut } from "./storage";
+import * as auth from "./auth";
+import { sdk } from "./_core/sdk";
+import { ONE_YEAR_MS } from "@shared/const";
 
 // Admin-only procedure
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -34,6 +37,7 @@ export const appRouter = router({
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -41,6 +45,73 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+
+    // Password-based login
+    loginWithPassword: publicProcedure
+      .input(z.object({
+        email: z.string().email(),
+        password: z.string().min(1),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const user = await auth.authenticateWithPassword(input.email, input.password);
+        
+        if (!user) {
+          throw new TRPCError({
+            code: 'UNAUTHORIZED',
+            message: 'Email o contrase\u00f1a incorrectos',
+          });
+        }
+
+        // Create session token
+        const openId = user.openId || `local-${user.id}`;
+        const token = await sdk.createSessionToken(openId, {
+          name: user.name || '',
+          expiresInMs: ONE_YEAR_MS,
+        });
+        
+        // Set cookie
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, token, cookieOptions);
+
+        return { success: true, user };
+      }),
+
+    // Change own password
+    changePassword: protectedProcedure
+      .input(z.object({
+        currentPassword: z.string().min(1),
+        newPassword: z.string().min(6),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Verify current password
+        const user = await db.getUserById(ctx.user.id);
+        if (!user || !user.passwordHash) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Usuario no tiene contrase\u00f1a configurada',
+          });
+        }
+
+        const isValid = await auth.verifyPassword(input.currentPassword, user.passwordHash);
+        if (!isValid) {
+          throw new TRPCError({
+            code: 'UNAUTHORIZED',
+            message: 'Contrase\u00f1a actual incorrecta',
+          });
+        }
+
+        // Update password
+        await auth.updateUserPassword(ctx.user.id, input.newPassword);
+
+        await db.logActivity({
+          userId: ctx.user.id,
+          action: 'change_password',
+          resourceType: 'user',
+          resourceId: ctx.user.id,
+        });
+
+        return { success: true };
+      }),
   }),
 
   // ============= HARVEST ROUTES =============
@@ -233,6 +304,51 @@ export const appRouter = router({
           resourceId: input.userId,
         });
         
+        return { success: true };
+      }),
+
+    // Create user with password
+    createWithPassword: adminProcedure
+      .input(z.object({
+        email: z.string().email(),
+        password: z.string().min(6),
+        name: z.string().optional(),
+        role: z.enum(['admin', 'editor', 'viewer', 'user']).optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        await auth.createUserWithPassword({
+          email: input.email,
+          password: input.password,
+          name: input.name,
+          role: input.role,
+        });
+
+        await db.logActivity({
+          userId: ctx.user.id,
+          action: 'create_user',
+          resourceType: 'user',
+          details: JSON.stringify({ email: input.email, role: input.role }),
+        });
+
+        return { success: true };
+      }),
+
+    // Reset user password (admin only)
+    resetPassword: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        newPassword: z.string().min(6),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        await auth.updateUserPassword(input.userId, input.newPassword);
+
+        await db.logActivity({
+          userId: ctx.user.id,
+          action: 'reset_user_password',
+          resourceType: 'user',
+          resourceId: input.userId,
+        });
+
         return { success: true };
       }),
   }),

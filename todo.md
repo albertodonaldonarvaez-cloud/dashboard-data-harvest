@@ -92,3 +92,15 @@
 - [x] Implementar API para gestionar nombres de cortadoras
 - [x] Crear interfaz de configuración de cortadoras para super admin
 - [x] Corregir responsive de barra flotante (agregar espacio en bordes móvil)
+
+
+## Sistema de Autenticación con Contraseñas
+- [x] Agregar campo passwordHash a tabla users en esquema
+- [x] Instalar bcrypt para hash de contraseñas
+- [x] Implementar funciones de hash y verificación de contraseñas en backend
+- [x] Crear endpoint de login con email y contraseña
+- [x] Crear página de login con formulario email/contraseña
+- [x] Actualizar formulario de creación de usuarios para incluir contraseña
+- [x] Implementar funcionalidad de restablecimiento de contraseña por admin
+- [x] Agregar opción para que usuarios cambien su propia contraseña
+- [x] Actualizar sistema de sesiones para soportar ambos métodos de auth
