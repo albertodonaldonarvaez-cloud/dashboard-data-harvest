@@ -744,14 +744,15 @@ export const appRouter = router({
 
     // Test connection to KoboToolbox API
     testConnection: adminProcedure.query(async () => {
-      const { fetchKoboSubmissions, getDefaultKoboConfig } = await import('./kobo-client');
+      const { fetchKoboSubmissions, getKoboConfigFromDB } = await import('./kobo-client');
       
-      const config = getDefaultKoboConfig();
+      // Get configuration from database
+      const config = await getKoboConfigFromDB();
       
-      if (!config.token) {
+      if (!config || !config.token) {
         return {
           success: false,
-          message: 'KoboToolbox API token no configurado',
+          message: 'KoboToolbox API no configurado. Por favor, configure las credenciales en la sección de Configuración.',
         };
       }
 

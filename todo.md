@@ -177,3 +177,9 @@
 - [x] Subir imágenes descargadas a S3 (carpetas large y small)
 - [x] Guardar URLs de imágenes en tabla harvest_attachments
 - [x] Actualizar sincronización para procesar imágenes automáticamente
+
+
+## Corrección de Prueba de Conexión KoboToolbox
+- [x] Diagnosticar por qué testConnection devuelve "API no configurado"
+- [x] Verificar que el endpoint testConnection obtenga la configuración correctamente
+- [x] Probar conexión con credenciales reales
