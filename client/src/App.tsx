@@ -12,22 +12,30 @@ import Settings from "./pages/Settings";
 import CortadorasConfig from "./pages/CortadorasConfig";
 import Login from "./pages/Login";
 import ChangePassword from "./pages/ChangePassword";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/login"} component={Login} />
-      <Route path={"/"} component={Dashboard} />
-      <Route path={"/analytics"} component={Analytics} />
-      <Route path={"/data"} component={DataList} />
-      <Route path={"/users"} component={Users} />
-      <Route path={"/cortadoras"} component={CortadorasConfig} />
-      <Route path={"/change-password"} component={ChangePassword} />
-      <Route path={"/settings"} component={Settings} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
+      <Route path={"/*"}>
+        {() => (
+          <ProtectedRoute>
+            <Switch>
+              <Route path={"/"} component={Dashboard} />
+              <Route path={"/analytics"} component={Analytics} />
+              <Route path={"/data"} component={DataList} />
+              <Route path={"/users"} component={Users} />
+              <Route path={"/cortadoras"} component={CortadorasConfig} />
+              <Route path={"/change-password"} component={ChangePassword} />
+              <Route path={"/settings"} component={Settings} />
+              <Route path={"/404"} component={NotFound} />
+              <Route component={NotFound} />
+            </Switch>
+          </ProtectedRoute>
+        )}
+      </Route>
     </Switch>
   );
 }

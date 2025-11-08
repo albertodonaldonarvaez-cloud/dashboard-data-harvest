@@ -113,3 +113,10 @@
 
 ## Optimización de Logout
 - [x] Hacer el botón de cerrar sesión más rápido con redirección inmediata
+
+
+## Corrección de Permisos
+- [x] Revisar permisos en routers.ts para endpoints de visualización
+- [x] Cambiar procedures de visualización a protectedProcedure (permitir todos los usuarios autenticados)
+- [x] Mantener adminProcedure solo para operaciones de escritura/eliminación
+- [x] Verificar que viewers, editors y users puedan ver toda la información
