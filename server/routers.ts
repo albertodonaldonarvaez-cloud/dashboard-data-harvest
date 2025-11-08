@@ -62,9 +62,15 @@ export const appRouter = router({
           });
         }
 
-        // Create session token
-        const openId = user.openId || `local-${user.id}`;
-        const token = await sdk.createSessionToken(openId, {
+        // Create session token using the openId from database
+        if (!user.openId) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Usuario no tiene openId configurado',
+          });
+        }
+        
+        const token = await sdk.createSessionToken(user.openId, {
           name: user.name || '',
           expiresInMs: ONE_YEAR_MS,
         });

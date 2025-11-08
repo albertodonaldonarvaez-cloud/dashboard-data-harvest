@@ -127,3 +127,11 @@
 - [x] Ejecutar script para crear usuario admin en base de datos
 - [x] Investigar loop de redirección en ProtectedRoute
 - [x] Corregir problema que causa recarga infinita al entrar con otro usuario
+
+
+## Problema de Autenticación con Usuarios No-Admin
+- [x] Diagnosticar por qué usuarios no-admin son redirigidos a login constantemente
+- [x] Revisar si la cookie se está estableciendo correctamente
+- [x] Verificar que el backend reconoce la sesión del usuario
+- [x] Corregir problema de autenticación
+- [x] Probar con usuario no-admin
