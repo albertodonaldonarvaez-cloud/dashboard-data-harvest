@@ -1,9 +1,0 @@
-{
-  "query": "UPDATE users SET openId = CONCAT('local-user-', id) WHERE openId IS NULL;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2dXMzNE423GF752.9a0811560574 --database jeFyjhDrZDFMynTvQhZTkU --execute UPDATE users SET openId = CONCAT('local-user-', id) WHERE openId IS NULL;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 60
-}

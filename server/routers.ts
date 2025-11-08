@@ -62,15 +62,9 @@ export const appRouter = router({
           });
         }
 
-        // Create session token using the openId from database
-        if (!user.openId) {
-          throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: 'Usuario no tiene openId configurado',
-          });
-        }
-        
-        const token = await sdk.createSessionToken(user.openId, {
+        // Create session token
+        const openId = user.openId || `local-${user.id}`;
+        const token = await sdk.createSessionToken(openId, {
           name: user.name || '',
           expiresInMs: ONE_YEAR_MS,
         });
@@ -157,7 +151,7 @@ export const appRouter = router({
     create: editorProcedure
       .input(z.object({
         parcela: z.string(),
-        pesoCaja: z.string(), // Changed to string for decimal support
+        pesoCaja: z.number(),
         numeroCortadora: z.string(),
         numeroCaja: z.string(),
         tipoHigo: z.string(),
@@ -186,7 +180,7 @@ export const appRouter = router({
       .input(z.object({
         id: z.number(),
         parcela: z.string().optional(),
-        pesoCaja: z.string().optional(), // Changed to string for decimal support
+        pesoCaja: z.number().optional(),
         numeroCortadora: z.string().optional(),
         numeroCaja: z.string().optional(),
         tipoHigo: z.string().optional(),
@@ -486,290 +480,6 @@ export const appRouter = router({
 
         return { success: true };
       }),
-  }),
-
-  // ============= DATA IMPORT =============
-  import: router({
-    // Import harvests from JSON file
-    importJSON: adminProcedure
-      .input(z.object({
-        data: z.array(z.object({
-          escanea_la_parcela: z.string(),
-          peso_de_la_caja: z.number(),
-          numero_de_cortadora: z.string(),
-          numero_de_caja: z.string(),
-          tipo_de_higo: z.string(),
-          start: z.string().optional(),
-          foto_de_la_caja: z.string().optional(),
-          _attachments: z.array(z.any()).optional(),
-        })),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        const results = {
-          success: 0,
-          failed: 0,
-          errors: [] as string[],
-        };
-
-        for (const item of input.data) {
-          try {
-            // Parse parcela (format: "367 -EL CHATO" or "232 -")
-            const parcela = item.escanea_la_parcela.split('-')[0].trim();
-            
-            // Parse fecha from start field or use current date
-            const submissionTime = item.start ? new Date(item.start) : new Date();
-            
-            // Determine tipo de higo based on numero_de_cortadora
-            let tipoHigo = item.tipo_de_higo;
-            if (item.numero_de_cortadora === '97') {
-              tipoHigo = 'primera_calidad';
-            } else if (item.numero_de_cortadora === '98') {
-              tipoHigo = 'segunda_calidad';
-            } else if (item.numero_de_cortadora === '99') {
-              tipoHigo = 'desperdicio';
-            }
-
-            // Create harvest record
-            await db.createHarvest({
-              parcela,
-              pesoCaja: item.peso_de_la_caja.toString(),
-              numeroCortadora: item.numero_de_cortadora,
-              numeroCaja: item.numero_de_caja,
-              tipoHigo,
-              submissionTime,
-              status: 'submitted_via_web',
-            });
-
-            results.success++;
-          } catch (error) {
-            results.failed++;
-            results.errors.push(`Error en registro ${item.numero_de_caja}: ${error instanceof Error ? error.message : 'Error desconocido'}`);
-          }
-        }
-
-        await db.logActivity({
-          userId: ctx.user.id,
-          action: 'import_json',
-          details: JSON.stringify({
-            total: input.data.length,
-            success: results.success,
-            failed: results.failed,
-          }),
-        });
-
-        return results;
-      }),
-
-    // Validate JSON structure before import
-    validateJSON: adminProcedure
-      .input(z.object({
-        data: z.array(z.any()),
-      }))
-      .query(({ input }) => {
-        const validation = {
-          valid: 0,
-          invalid: 0,
-          errors: [] as string[],
-          preview: [] as any[],
-        };
-
-        input.data.slice(0, 10).forEach((item, index) => {
-          try {
-            // Check required fields
-            if (!item.escanea_la_parcela || !item.peso_de_la_caja || !item.numero_de_cortadora || !item.numero_de_caja) {
-              throw new Error('Faltan campos requeridos');
-            }
-
-            // Parse parcela
-            const parcela = item.escanea_la_parcela.split('-')[0].trim();
-            
-            validation.valid++;
-            validation.preview.push({
-              parcela,
-              peso: item.peso_de_la_caja,
-              cortadora: item.numero_de_cortadora,
-              caja: item.numero_de_caja,
-              tipo: item.tipo_de_higo,
-            });
-          } catch (error) {
-            validation.invalid++;
-            validation.errors.push(`Registro ${index + 1}: ${error instanceof Error ? error.message : 'Error desconocido'}`);
-          }
-        });
-
-        return validation;
-      }),
-  }),
-
-  // KoboToolbox Synchronization
-  kobo: router({
-    // Sync submissions from KoboToolbox API
-    sync: adminProcedure
-      .input(z.object({
-        limit: z.number().optional(),
-        sinceDate: z.string().optional(), // ISO date string
-      }))
-      .mutation(async ({ input }) => {
-        const { fetchKoboSubmissions, processKoboSubmission, getKoboConfigFromDB } = await import('./kobo-client');
-        const db = await import('./db');
-        
-        // Try to get config from database first
-        const config = await getKoboConfigFromDB();
-        
-        if (!config || !config.token) {
-          throw new TRPCError({
-            code: 'PRECONDITION_FAILED',
-            message: 'KoboToolbox API token no configurado. Agrega KOBO_API_TOKEN en las variables de entorno.',
-          });
-        }
-
-        const results = {
-          success: 0,
-          failed: 0,
-          skipped: 0,
-          errors: [] as string[],
-        };
-
-        try {
-          // Fetch submissions from KoboToolbox
-          const options: any = {};
-          if (input.limit) {
-            options.limit = input.limit;
-          }
-          if (input.sinceDate) {
-            options.since = new Date(input.sinceDate);
-          }
-
-          const submissions = await fetchKoboSubmissions(config, options);
-
-          // Process and import each submission
-          for (const submission of submissions) {
-            try {
-              const processed = processKoboSubmission(submission);
-              
-              if (!processed) {
-                results.skipped++;
-                results.errors.push(`Submission ${submission._id}: Datos inválidos o incompletos`);
-                continue;
-              }
-
-              // Create harvest record
-              const harvestId = await db.createHarvest({
-                parcela: processed.parcela,
-                pesoCaja: processed.pesoCaja.toString(),
-                numeroCortadora: processed.numeroCortadora,
-                numeroCaja: processed.numeroCaja,
-                tipoHigo: processed.tipoHigo,
-                submissionTime: processed.submissionTime,
-                latitud: processed.latitud,
-                longitud: processed.longitud,
-                status: processed.status,
-                submittedBy: processed.submittedBy,
-              });
-
-              // Process and upload images if available
-              if (processed.imageUrls && processed.imageUrls.length > 0) {
-                try {
-                  const { processHarvestImages } = await import('./image-processor');
-                  const imageResults = await processHarvestImages(processed.imageUrls, harvestId, config.token);
-                  
-                  // Save image URLs to database
-                  for (const img of imageResults) {
-                    await db.createAttachment({
-                      harvestId,
-                      filename: `image-${Date.now()}.jpg`,
-                      mimetype: 'image/jpeg',
-                      originalUrl: img.originalUrl,
-                      largeUrl: img.largeUrl,
-                      smallUrl: img.smallUrl,
-                    });
-                  }
-                } catch (imgError) {
-                  console.error(`Failed to process images for harvest ${harvestId}:`, imgError);
-                  // Don't fail the entire sync if image processing fails
-                }
-              }
-
-              results.success++;
-            } catch (error) {
-              results.failed++;
-              results.errors.push(`Submission ${submission._id}: ${error instanceof Error ? error.message : 'Error desconocido'}`);
-            }
-          }
-
-          // Update last sync time
-          await db.updateLastSyncTime();
-          
-          return results;
-        } catch (error) {
-          throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: `Error al sincronizar con KoboToolbox: ${error instanceof Error ? error.message : 'Error desconocido'}`,
-          });
-        }
-      }),
-
-    // Get KoboToolbox configuration
-    getConfig: adminProcedure.query(async () => {
-      const db = await import('./db');
-      const config = await db.getKoboConfig();
-      
-      if (!config) {
-        return null;
-      }
-
-      // Don't send the full API token to the frontend for security
-      return {
-        id: config.id,
-        apiUrl: config.apiUrl,
-        assetId: config.assetId,
-        apiTokenPreview: config.apiToken ? `${config.apiToken.substring(0, 8)}...` : '',
-        hasApiToken: !!config.apiToken,
-        lastSyncTime: config.lastSyncTime,
-      };
-    }),
-
-    // Save KoboToolbox configuration
-    saveConfig: adminProcedure
-      .input(z.object({
-        apiUrl: z.string().url(),
-        assetId: z.string().min(1),
-        apiToken: z.string().min(1),
-      }))
-      .mutation(async ({ input }) => {
-        const db = await import('./db');
-        await db.saveKoboConfig(input);
-        return { success: true };
-      }),
-
-    // Test connection to KoboToolbox API
-    testConnection: adminProcedure.query(async () => {
-      const { fetchKoboSubmissions, getKoboConfigFromDB } = await import('./kobo-client');
-      
-      // Get configuration from database
-      const config = await getKoboConfigFromDB();
-      
-      if (!config || !config.token) {
-        return {
-          success: false,
-          message: 'KoboToolbox API no configurado. Por favor, configure las credenciales en la sección de Configuración.',
-        };
-      }
-
-      try {
-        // Try to fetch just 1 submission to test connection
-        await fetchKoboSubmissions(config, { limit: 1 });
-        return {
-          success: true,
-          message: 'Conexión exitosa con KoboToolbox API',
-        };
-      } catch (error) {
-        return {
-          success: false,
-          message: `Error de conexión: ${error instanceof Error ? error.message : 'Error desconocido'}`,
-        };
-      }
-    }),
   }),
 });
 

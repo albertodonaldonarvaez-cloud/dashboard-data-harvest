@@ -111,84 +111,11 @@
 - [x] Dejar solo formulario de email y contraseña
 
 
-## Optimización de Logout
-- [x] Hacer el botón de cerrar sesión más rápido con redirección inmediata
-
-
-## Corrección de Permisos
-- [x] Revisar permisos en routers.ts para endpoints de visualización
-- [x] Cambiar procedures de visualización a protectedProcedure (permitir todos los usuarios autenticados)
-- [x] Mantener adminProcedure solo para operaciones de escritura/eliminación
-- [x] Verificar que viewers, editors y users puedan ver toda la información
-
-
-## Usuario Admin y Loop de Redirección
-- [x] Crear script para insertar usuario administrador con contraseña TecTi#2020
-- [x] Ejecutar script para crear usuario admin en base de datos
-- [x] Investigar loop de redirección en ProtectedRoute
-- [x] Corregir problema que causa recarga infinita al entrar con otro usuario
-
-
-## Problema de Autenticación con Usuarios No-Admin
-- [x] Diagnosticar por qué usuarios no-admin son redirigidos a login constantemente
-- [x] Revisar si la cookie se está estableciendo correctamente
-- [x] Verificar que el backend reconoce la sesión del usuario
-- [x] Corregir problema de autenticación
-- [x] Probar con usuario no-admin
-
-
-## Error de Permisos en Settings
-- [x] Identificar qué consulta en Settings requiere permisos de admin
-- [x] Ajustar Settings para que usuarios no-admin puedan acceder
-- [x] Separar funciones administrativas de opciones personales
-
-
-## Mejoras de UX para Usuarios No-Admin
-- [x] Ocultar ícono de Usuarios en NavigationMenu para usuarios no-admin
-- [x] Eliminar sección de Apariencia en Settings
-- [x] Eliminar sección de Acerca de en Settings
-
-
-## Funcionalidades para Administrador
-- [x] Mejorar visibilidad de configuración de nombres de cortadoras en Settings
-- [x] Crear endpoint backend para importación de archivos JSON
-- [x] Validar estructura del JSON antes de importar
-- [x] Crear interfaz de importación de JSON en área de administrador
-- [x] Mostrar preview de datos antes de confirmar importación
-- [x] Agregar manejo de errores y feedback al usuario
-
-
-## Sincronización Automática con KoboToolbox
-- [x] Analizar script de Python para entender procesamiento de datos
-- [x] Crear cliente de API de KoboToolbox en backend (TypeScript)
-- [x] Implementar procesamiento de datos crudos de KoboToolbox
-- [x] Crear endpoint de sincronización manual para admin
-- [ ] Agregar configuración de credenciales de API en Settings
-- [x] Crear interfaz de sincronización en dashboard admin
-- [x] Mostrar estado de última sincronización y logs
-- [ ] Implementar sincronización automática programada (opcional)
-
-
-## Configuración Personalizada de KoboToolbox e Imágenes
-- [x] Crear tabla de configuración de KoboToolbox en base de datos
-- [x] Implementar endpoints para guardar/obtener configuración de KoboToolbox
-- [x] Crear interfaz de configuración de credenciales en Settings (API Token, API URL, Asset ID)
-- [x] Implementar descarga automática de imágenes desde KoboToolbox
-- [x] Subir imágenes descargadas a S3 (carpetas large y small)
-- [x] Guardar URLs de imágenes en tabla harvest_attachments
-- [x] Actualizar sincronización para procesar imágenes automáticamente
-
-
-## Corrección de Prueba de Conexión KoboToolbox
-- [x] Diagnosticar por qué testConnection devuelve "API no configurado"
-- [x] Verificar que el endpoint testConnection obtenga la configuración correctamente
-- [x] Probar conexión con credenciales reales
-
-
-## Corrección de Importación de KoboToolbox
-- [x] Revisar conversión de peso (kg) - debe ser número flotante no texto
-- [x] Corregir descarga de imágenes desde API de KoboToolbox
-- [x] Verificar almacenamiento de URLs de imágenes en base de datos
-- [x] Implementar visualización de imágenes en vista mosaico
-- [x] Implementar lightbox para ver imágenes grandes
-- [x] Probar con datos reales de la API
+## Corrección Crítica de Procesamiento de Datos
+- [x] Cambiar tipo de dato pesoCaja de int a decimal(10,2) en esquema
+- [x] Normalizar tipos de higo en base de datos (eliminar duplicados)
+- [x] Eliminar registros con pesos absurdos (> 50 kg por caja)
+- [x] Corregir cálculo de peso promedio (solo primera calidad)
+- [x] Convertir resultados SQL de string a number en backend
+- [x] Actualizar formatWeight en frontend para manejar kg directamente
+- [x] Verificar que todos los datos se muestren correctamente

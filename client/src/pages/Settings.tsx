@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, User, Users, Key, Upload, RefreshCw, Settings2 } from 'lucide-react';
+import { Settings as SettingsIcon, User, Palette, Info, Users, Key } from 'lucide-react';
 import { Link } from 'wouter';
 import GlassCard from '@/components/GlassCard';
 import NavigationMenu from '@/components/NavigationMenu';
@@ -46,42 +46,6 @@ const Settings = () => {
                       <div>
                         <p className="font-semibold text-emerald-900">Configurar Cortadoras</p>
                         <p className="text-sm text-emerald-600">Asignar nombres personalizados</p>
-                      </div>
-                    </div>
-                    <span className="text-emerald-400">→</span>
-                  </div>
-                </a>
-                <a href="/kobo-config">
-                  <div className="flex items-center justify-between p-4 bg-white/50 rounded-xl hover:bg-white/70 transition-all cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <Settings2 className="w-5 h-5 text-emerald-600" />
-                      <div>
-                        <p className="font-semibold text-emerald-900">Configurar Credenciales de KoboToolbox</p>
-                        <p className="text-sm text-emerald-600">API Token, URL y Asset ID</p>
-                      </div>
-                    </div>
-                    <span className="text-emerald-400">→</span>
-                  </div>
-                </a>
-                <a href="/sync">
-                  <div className="flex items-center justify-between p-4 bg-white/50 rounded-xl hover:bg-white/70 transition-all cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <RefreshCw className="w-5 h-5 text-emerald-600" />
-                      <div>
-                        <p className="font-semibold text-emerald-900">Sincronizar con KoboToolbox</p>
-                        <p className="text-sm text-emerald-600">Importar datos automáticamente desde la API</p>
-                      </div>
-                    </div>
-                    <span className="text-emerald-400">→</span>
-                  </div>
-                </a>
-                <a href="/import">
-                  <div className="flex items-center justify-between p-4 bg-white/50 rounded-xl hover:bg-white/70 transition-all cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <Upload className="w-5 h-5 text-emerald-600" />
-                      <div>
-                        <p className="font-semibold text-emerald-900">Importar Datos JSON</p>
-                        <p className="text-sm text-emerald-600">Cargar datos de cosecha desde archivo</p>
                       </div>
                     </div>
                     <span className="text-emerald-400">→</span>
@@ -138,7 +102,60 @@ const Settings = () => {
           </GlassCard>
         </motion.div>
 
+        {/* Appearance */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <GlassCard className="p-6 mb-6" hover={false}>
+            <h2 className="text-xl font-bold text-emerald-800 mb-4 flex items-center gap-2">
+              <Palette className="w-5 h-5" /> Apariencia
+            </h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-white/50 rounded-xl">
+                <div>
+                  <p className="font-semibold text-emerald-900">Tema</p>
+                  <p className="text-sm text-emerald-600">Tema claro con acentos verdes</p>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-500 to-green-500" />
+              </div>
+              <div className="flex items-center justify-between p-4 bg-white/50 rounded-xl">
+                <div>
+                  <p className="font-semibold text-emerald-900">Estilo</p>
+                  <p className="text-sm text-emerald-600">Glassmorphism moderno</p>
+                </div>
+              </div>
+            </div>
+          </GlassCard>
+        </motion.div>
 
+
+
+        {/* About */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          <GlassCard className="p-6 mb-6" hover={false}>
+            <h2 className="text-xl font-bold text-emerald-800 mb-4 flex items-center gap-2">
+              <Info className="w-5 h-5" /> Acerca de
+            </h2>
+            <div className="space-y-2">
+              <p className="text-emerald-700">
+                <span className="font-semibold">Versión:</span> 1.0.0
+              </p>
+              <p className="text-emerald-700">
+                <span className="font-semibold">Sistema:</span> {APP_TITLE}
+              </p>
+              <p className="text-emerald-600 text-sm mt-4">
+                Sistema de gestión de cosecha con visualización de datos en tiempo real,
+                análisis de rendimiento y control de acceso basado en roles.
+              </p>
+            </div>
+          </GlassCard>
+        </motion.div>
 
         {/* Logout Button */}
         <motion.div

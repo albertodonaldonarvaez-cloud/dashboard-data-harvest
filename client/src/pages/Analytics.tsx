@@ -71,8 +71,7 @@ const Analytics = () => {
         }
         const tipo = h.tipoHigo?.toLowerCase() || 'sin clasificar';
         if (hourlyData[hour][tipo] !== undefined) {
-          const peso = typeof h.pesoCaja === 'string' ? parseFloat(h.pesoCaja) : (h.pesoCaja || 0);
-          hourlyData[hour][tipo] += peso;
+          hourlyData[hour][tipo] += (h.pesoCaja || 0) / 1000;
         }
       });
 
@@ -95,8 +94,7 @@ const Analytics = () => {
           if (harvestDay === dayStr) {
             const tipo = h.tipoHigo?.toLowerCase() || 'sin clasificar';
             if (data[tipo] !== undefined) {
-              const peso = typeof h.pesoCaja === 'string' ? parseFloat(h.pesoCaja) : (h.pesoCaja || 0);
-              data[tipo] += peso;
+              data[tipo] += (h.pesoCaja || 0) / 1000;
             }
           }
         });
@@ -121,8 +119,7 @@ const Analytics = () => {
     harvests.forEach((h) => {
       const tipo = h.tipoHigo?.toLowerCase() || 'sin clasificar';
       if (distribution[tipo] !== undefined) {
-        const peso = typeof h.pesoCaja === 'string' ? parseFloat(h.pesoCaja) : (h.pesoCaja || 0);
-        distribution[tipo] += peso;
+        distribution[tipo] += (h.pesoCaja || 0) / 1000;
       }
     });
 
@@ -153,8 +150,7 @@ const Analytics = () => {
       const tipo = h.tipoHigo?.toLowerCase() || 'sin clasificar';
       if (byQuality[tipo]) {
         byQuality[tipo].count += 1;
-        const peso = typeof h.pesoCaja === 'string' ? parseFloat(h.pesoCaja) : (h.pesoCaja || 0);
-        byQuality[tipo].weight += peso;
+        byQuality[tipo].weight += (h.pesoCaja || 0) / 1000;
       }
     });
 

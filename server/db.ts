@@ -166,24 +166,7 @@ export async function getAllHarvests(filters?: {
     query = query.where(and(...conditions)) as any;
   }
   
-  const results = await query.orderBy(desc(harvests.submissionTime));
-  
-  // Add first thumbnail image to each harvest for mosaic view
-  const harvestsWithThumbs = await Promise.all(
-    results.map(async (harvest) => {
-      const attachments = await db.select()
-        .from(harvestAttachments)
-        .where(eq(harvestAttachments.harvestId, harvest.id))
-        .limit(1);
-      
-      return {
-        ...harvest,
-        thumbnailUrl: attachments[0]?.smallUrl || null,
-      };
-    })
-  );
-  
-  return harvestsWithThumbs;
+  return await query.orderBy(desc(harvests.submissionTime));
 }
 
 export async function getHarvestById(id: number) {
@@ -223,10 +206,10 @@ export async function getHarvestStats(filters?: {
     conditions.push(lte(harvests.submissionTime, filters.endDate));
   }
   
+  // Total cajas and peso total from all harvests
   let query = db.select({
     totalCajas: sql<number>`COUNT(*)`,
-    pesoTotal: sql<number>`SUM(${harvests.pesoCaja})`,
-    promedioPeso: sql<number>`AVG(${harvests.pesoCaja})`,
+    pesoTotal: sql<number>`SUM(CAST(${harvests.pesoCaja} AS DECIMAL(10,2)))`,
   }).from(harvests);
   
   if (conditions.length > 0) {
@@ -234,7 +217,26 @@ export async function getHarvestStats(filters?: {
   }
   
   const result = await query;
-  return result[0];
+  
+  // Calculate average weight ONLY from primera calidad (normalized)
+  const primeraConditions = [...conditions];
+  primeraConditions.push(sql`LOWER(REPLACE(${harvests.tipoHigo}, ' ', '_')) = 'primera_calidad'`);
+  
+  let avgQuery = db.select({
+    promedioPeso: sql<number>`AVG(CAST(${harvests.pesoCaja} AS DECIMAL(10,2)))`,
+  }).from(harvests);
+  
+  if (primeraConditions.length > 0) {
+    avgQuery = avgQuery.where(and(...primeraConditions)) as any;
+  }
+  
+  const avgResult = await avgQuery;
+  
+  return {
+    totalCajas: result[0].totalCajas,
+    pesoTotal: typeof result[0].pesoTotal === 'string' ? parseFloat(result[0].pesoTotal) : result[0].pesoTotal,
+    promedioPeso: typeof avgResult[0].promedioPeso === 'string' ? parseFloat(avgResult[0].promedioPeso) : avgResult[0].promedioPeso,
+  };
 }
 
 export async function getHarvestsByTipo(filters?: {
@@ -255,14 +257,19 @@ export async function getHarvestsByTipo(filters?: {
   let query = db.select({
     tipoHigo: harvests.tipoHigo,
     count: sql<number>`COUNT(*)`,
-    pesoTotal: sql<number>`SUM(${harvests.pesoCaja})`,
+    pesoTotal: sql<number>`SUM(CAST(${harvests.pesoCaja} AS DECIMAL(10,2)))`,
   }).from(harvests).groupBy(harvests.tipoHigo);
   
   if (conditions.length > 0) {
     query = query.where(and(...conditions)) as any;
   }
   
-  return await query;
+  const results = await query;
+  // Convert string pesoTotal to number
+  return results.map(r => ({
+    ...r,
+    pesoTotal: typeof r.pesoTotal === 'string' ? parseFloat(r.pesoTotal) : r.pesoTotal,
+  }));
 }
 
 export async function getHarvestsByParcela(filters?: {
@@ -283,14 +290,19 @@ export async function getHarvestsByParcela(filters?: {
   let query = db.select({
     parcela: harvests.parcela,
     count: sql<number>`COUNT(*)`,
-    pesoTotal: sql<number>`SUM(${harvests.pesoCaja})`,
+    pesoTotal: sql<number>`SUM(CAST(${harvests.pesoCaja} AS DECIMAL(10,2)))`,
   }).from(harvests).groupBy(harvests.parcela);
   
   if (conditions.length > 0) {
     query = query.where(and(...conditions)) as any;
   }
   
-  return await query.orderBy(desc(sql`COUNT(*)`));
+  const results = await query.orderBy(desc(sql`COUNT(*)`));
+  // Convert string pesoTotal to number
+  return results.map(r => ({
+    ...r,
+    pesoTotal: typeof r.pesoTotal === 'string' ? parseFloat(r.pesoTotal) : r.pesoTotal,
+  }));
 }
 
 // ============= ATTACHMENT OPERATIONS =============
@@ -471,7 +483,8 @@ export async function getTopCortadoras(limit: number = 5): Promise<Array<{
       }
       
       cortadoraStats[numero].count += 1;
-      cortadoraStats[numero].pesoTotal += parseFloat(h.pesoCaja as string) || 0;
+      const peso = typeof h.pesoCaja === 'string' ? parseFloat(h.pesoCaja) : (h.pesoCaja || 0);
+      cortadoraStats[numero].pesoTotal += peso;
     });
     
     // Get custom names
@@ -494,64 +507,5 @@ export async function getTopCortadoras(limit: number = 5): Promise<Array<{
   } catch (error) {
     console.error("[Database] Failed to get top cortadoras:", error);
     return [];
-  }
-}
-
-
-// ========== KoboToolbox Configuration ==========
-
-export async function getKoboConfig() {
-  const db = await getDb();
-  if (!db) return null;
-
-  const { koboConfig } = await import('../drizzle/schema');
-  const results = await db.select().from(koboConfig).limit(1);
-  return results.length > 0 ? results[0] : null;
-}
-
-export async function saveKoboConfig(config: {
-  apiUrl: string;
-  assetId: string;
-  apiToken: string;
-}) {
-  const db = await getDb();
-  if (!db) throw new Error('Database not available');
-
-  const { koboConfig } = await import('../drizzle/schema');
-  
-  // Check if config exists
-  const existing = await getKoboConfig();
-  
-  if (existing) {
-    // Update existing config
-    await db.update(koboConfig)
-      .set({
-        apiUrl: config.apiUrl,
-        assetId: config.assetId,
-        apiToken: config.apiToken,
-        updatedAt: new Date(),
-      })
-      .where(eq(koboConfig.id, existing.id));
-  } else {
-    // Insert new config
-    await db.insert(koboConfig).values({
-      apiUrl: config.apiUrl,
-      assetId: config.assetId,
-      apiToken: config.apiToken,
-    });
-  }
-}
-
-export async function updateLastSyncTime() {
-  const db = await getDb();
-  if (!db) return;
-
-  const { koboConfig } = await import('../drizzle/schema');
-  const existing = await getKoboConfig();
-  
-  if (existing) {
-    await db.update(koboConfig)
-      .set({ lastSyncTime: new Date() })
-      .where(eq(koboConfig.id, existing.id));
   }
 }

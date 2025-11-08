@@ -1,9 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import Import from "@/pages/Import";
-import Sync from "./pages/Sync";
-import KoboConfig from "./pages/KoboConfig";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -15,31 +12,22 @@ import Settings from "./pages/Settings";
 import CortadorasConfig from "./pages/CortadorasConfig";
 import Login from "./pages/Login";
 import ChangePassword from "./pages/ChangePassword";
-import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/login"} component={Login} />
-      <Route path={"/*"}>
-        {() => (
-          <ProtectedRoute>
-            <Switch>
-              <Route path={"/"} component={Dashboard} />
-              <Route path={"/analytics"} component={Analytics} />
-              <Route path={"/data"} component={DataList} />
-              <Route path={"/users"} component={Users} />
-              <Route path={"/cortadoras"} component={CortadorasConfig} />
-              <Route path={"/change-password"} component={ChangePassword} />
-              <Route path={"/settings"} component={Settings} />
-              <Route path={"/import"} component={Import} />
-              <Route path={"/sync"} component={Sync} />
-              <Route path={"/kobo-config"} component={KoboConfig} />
-              <Route path={"/404"} component={NotFound} />            </Switch>
-          </ProtectedRoute>
-        )}
-      </Route>
+      <Route path={"/"} component={Dashboard} />
+      <Route path={"/analytics"} component={Analytics} />
+      <Route path={"/data"} component={DataList} />
+      <Route path={"/users"} component={Users} />
+      <Route path={"/cortadoras"} component={CortadorasConfig} />
+      <Route path={"/change-password"} component={ChangePassword} />
+      <Route path={"/settings"} component={Settings} />
+      <Route path={"/404"} component={NotFound} />
+      {/* Final fallback route */}
+      <Route component={NotFound} />
     </Switch>
   );
 }

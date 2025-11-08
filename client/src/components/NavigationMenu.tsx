@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { Home, BarChart3, Settings, Users, Database } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/_core/hooks/useAuth';
 
 interface NavigationMenuProps {
   className?: string;
@@ -10,19 +9,14 @@ interface NavigationMenuProps {
 
 const NavigationMenu = ({ className }: NavigationMenuProps) => {
   const [location] = useLocation();
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
 
-  const allNavItems = [
+  const navItems = [
     { icon: Home, label: 'Inicio', path: '/' },
     { icon: BarChart3, label: 'Analytics', path: '/analytics' },
     { icon: Database, label: 'Datos', path: '/data' },
-    { icon: Users, label: 'Usuarios', path: '/users', adminOnly: true },
+    { icon: Users, label: 'Usuarios', path: '/users' },
     { icon: Settings, label: 'Config', path: '/settings' },
   ];
-
-  // Filter nav items based on user role
-  const navItems = allNavItems.filter(item => !item.adminOnly || isAdmin);
 
   return (
     <motion.nav

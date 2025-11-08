@@ -28,9 +28,10 @@ const Dashboard = () => {
     limit: 5,
   });
 
-  const formatWeight = (grams: number | null | undefined) => {
-    if (!grams) return '0 kg';
-    return `${(grams / 1000).toFixed(2)} kg`;
+  const formatWeight = (weight: string | number | null | undefined) => {
+    if (!weight) return '0 kg';
+    const kg = typeof weight === 'string' ? parseFloat(weight) : weight;
+    return `${kg.toFixed(2)} kg`;
   };
 
   return (

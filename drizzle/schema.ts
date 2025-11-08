@@ -43,7 +43,7 @@ export const harvests = mysqlTable("harvests", {
   startTime: timestamp("startTime"),
   endTime: timestamp("endTime"),
   parcela: varchar("parcela", { length: 100 }), // escanea_la_parcela
-  pesoCaja: decimal("pesoCaja", { precision: 10, scale: 2 }), // peso_de_la_caja in kg
+  pesoCaja: int("pesoCaja"), // peso_de_la_caja in grams (multiply kg by 1000)
   fotoCaja: varchar("fotoCaja", { length: 255 }), // filename
   numeroCortadora: varchar("numeroCortadora", { length: 50 }),
   numeroCaja: varchar("numeroCaja", { length: 50 }),
@@ -114,20 +114,3 @@ export const cortadoraConfig = mysqlTable("cortadora_config", {
 
 export type CortadoraConfig = typeof cortadoraConfig.$inferSelect;
 export type InsertCortadoraConfig = typeof cortadoraConfig.$inferInsert;
-
-/**
- * KoboToolbox API configuration table
- * Stores API credentials and settings for synchronization
- */
-export const koboConfig = mysqlTable("kobo_config", {
-  id: int("id").autoincrement().primaryKey(),
-  apiUrl: varchar("apiUrl", { length: 255 }).notNull().default('https://kf.smart-harvest.tecti-cloud.com'),
-  assetId: varchar("assetId", { length: 100 }).notNull(),
-  apiToken: text("apiToken").notNull(),
-  lastSyncTime: timestamp("lastSyncTime"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type KoboConfig = typeof koboConfig.$inferSelect;
-export type InsertKoboConfig = typeof koboConfig.$inferInsert;

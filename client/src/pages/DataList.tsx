@@ -43,7 +43,6 @@ const DataList = () => {
   const [tipoFilter, setTipoFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [selectedHarvest, setSelectedHarvest] = useState<number | null>(null);
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   // Fetch harvests
   const { data: harvests, isLoading } = trpc.harvests.list.useQuery({
@@ -241,17 +240,9 @@ const DataList = () => {
                       onClick={() => setSelectedHarvest(harvest.id)}
                     >
                       <div className="relative aspect-square bg-white/50 rounded-xl overflow-hidden hover:bg-white/70 transition-all">
-                        {harvest.thumbnailUrl ? (
-                          <img
-                            src={harvest.thumbnailUrl}
-                            alt={`Cosecha ${harvest.numeroCaja}`}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-100 to-green-100">
-                            <Package className="w-16 h-16 text-emerald-300" />
-                          </div>
-                        )}
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-100 to-green-100">
+                          <Package className="w-16 h-16 text-emerald-300" />
+                        </div>
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform">
                           <p className="font-bold text-sm">{harvest.parcela}</p>
@@ -331,12 +322,12 @@ const DataList = () => {
                   <p className="text-sm text-muted-foreground mb-2">Imágenes</p>
                   <div className="grid grid-cols-2 gap-4">
                     {harvestDetail.attachments.map((att) => (
-                      <div key={att.id} className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer">
+                      <div key={att.id} className="relative aspect-square rounded-lg overflow-hidden group">
                         <img
                           src={att.smallUrl || att.largeUrl || ''}
                           alt={att.filename}
-                          className="w-full h-full object-cover transition-transform group-hover:scale-110"
-                          onClick={() => setLightboxImage(att.largeUrl || att.originalUrl || '')}
+                          className="w-full h-full object-cover cursor-pointer transition-transform group-hover:scale-110"
+                          onClick={() => window.open(att.largeUrl || att.originalUrl || '', '_blank')}
                         />
                       </div>
                     ))}
@@ -345,21 +336,6 @@ const DataList = () => {
               )}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Lightbox for full-size images */}
-      <Dialog open={lightboxImage !== null} onOpenChange={() => setLightboxImage(null)}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none">
-          <div className="relative w-full h-full flex items-center justify-center p-4">
-            {lightboxImage && (
-              <img
-                src={lightboxImage}
-                alt="Vista ampliada"
-                className="max-w-full max-h-[90vh] object-contain"
-              />
-            )}
-          </div>
         </DialogContent>
       </Dialog>
 
