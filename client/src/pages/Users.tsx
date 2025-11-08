@@ -58,8 +58,31 @@ const Users = () => {
 
   const utils = trpc.useUtils();
 
-  // Fetch users
-  const { data: users, isLoading } = trpc.users.list.useQuery();
+  // Check if user is admin
+  const isAdmin = currentUser?.role === 'admin';
+
+  // Fetch users (only if admin)
+  const { data: users, isLoading } = trpc.users.list.useQuery(undefined, {
+    enabled: isAdmin,
+  });
+
+  // If not admin, show access denied
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-white via-emerald-50/30 to-green-50 relative overflow-hidden pb-24 flex items-center justify-center">
+        <GlassCard className="p-8 max-w-md text-center">
+          <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-red-800 mb-2">Acceso Denegado</h2>
+          <p className="text-gray-600 mb-4">
+            Solo los administradores pueden acceder a la gestión de usuarios.
+          </p>
+          <Button onClick={() => window.history.back()} variant="outline">
+            Volver
+          </Button>
+        </GlassCard>
+      </div>
+    );
+  }
 
   // Create user mutation
   const createMutation = trpc.users.createWithPassword.useMutation({

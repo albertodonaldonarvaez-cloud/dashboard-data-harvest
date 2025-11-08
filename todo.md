@@ -135,3 +135,9 @@
 - [x] Verificar que el backend reconoce la sesión del usuario
 - [x] Corregir problema de autenticación
 - [x] Probar con usuario no-admin
+
+
+## Error de Permisos en Settings
+- [x] Identificar qué consulta en Settings requiere permisos de admin
+- [x] Ajustar Settings para que usuarios no-admin puedan acceder
+- [x] Separar funciones administrativas de opciones personales
