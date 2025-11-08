@@ -41,7 +41,7 @@ La instalación en un entorno de desarrollo local es rápida y directa, ideal pa
 Primero, clona el repositorio desde GitHub y navega al directorio del proyecto.
 
 ```bash
-git clone https://github.com/tu-usuario/harvest-dashboard.git
+git clone https://github.com/albertodonaldonarvaez-cloud/dashboard-data-harvest.git
 cd harvest-dashboard
 ```
 
@@ -365,7 +365,7 @@ sudo mkdir -p /var/www
 cd /var/www
 
 # Clonar repositorio
-sudo git clone https://github.com/tu-usuario/harvest-dashboard.git
+sudo git clone https://github.com/albertodonaldonarvaez-cloud/dashboard-data-harvest.git
 cd harvest-dashboard
 
 # Cambiar permisos

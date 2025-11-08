@@ -54,7 +54,7 @@ Para ejecutar HarvestDash necesitas **Node.js** versión 22 o superior, **pnpm**
 
 ## Instalación Rápida
 
-Para instalar HarvestDash, primero clona el repositorio con `git clone https://github.com/tu-usuario/harvest-dashboard.git` y navega al directorio con `cd harvest-dashboard`. Luego instala las dependencias ejecutando `pnpm install`. Copia el archivo de ejemplo de variables de entorno con `cp .env.example .env` y edita `.env` con tus credenciales de base de datos. Ejecuta las migraciones de base de datos con `pnpm db:push`. Finalmente, inicia el servidor de desarrollo con `pnpm dev` y accede a la aplicación en `http://localhost:3000`.
+Para instalar HarvestDash, primero clona el repositorio con `git clone https://github.com/albertodonaldonarvaez-cloud/dashboard-data-harvest.git` y navega al directorio con `cd harvest-dashboard`. Luego instala las dependencias ejecutando `pnpm install`. Copia el archivo de ejemplo de variables de entorno con `cp .env.example .env` y edita `.env` con tus credenciales de base de datos. Ejecuta las migraciones de base de datos con `pnpm db:push`. Finalmente, inicia el servidor de desarrollo con `pnpm dev` y accede a la aplicación en `http://localhost:3000`.
 
 Para instrucciones detalladas de instalación y deployment en producción, consulta la [Guía de Instalación](./INSTALL.md).
 
