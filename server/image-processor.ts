@@ -2,10 +2,17 @@ import sharp from 'sharp';
 import { storagePut } from './storage';
 
 /**
- * Download image from URL
+ * Download image from URL with optional authentication
  */
-async function downloadImage(url: string): Promise<Buffer> {
-  const response = await fetch(url);
+async function downloadImage(url: string, authToken?: string): Promise<Buffer> {
+  const headers: Record<string, string> = {};
+  
+  // Add authorization header if token is provided (for KoboToolbox images)
+  if (authToken) {
+    headers['Authorization'] = `Token ${authToken}`;
+  }
+  
+  const response = await fetch(url, { headers });
   
   if (!response.ok) {
     throw new Error(`Failed to download image: ${response.statusText}`);
@@ -22,11 +29,12 @@ async function downloadImage(url: string): Promise<Buffer> {
 export async function processAndUploadImage(
   imageUrl: string,
   harvestId: number,
-  fileName: string
+  fileName: string,
+  authToken?: string
 ): Promise<{ largeUrl: string; smallUrl: string }> {
   try {
     // Download original image
-    const imageBuffer = await downloadImage(imageUrl);
+    const imageBuffer = await downloadImage(imageUrl, authToken);
 
     // Process large version (max 1920px width, high quality)
     const largeBuffer = await sharp(imageBuffer)
@@ -71,7 +79,8 @@ export async function processAndUploadImage(
  */
 export async function processHarvestImages(
   imageUrls: string[],
-  harvestId: number
+  harvestId: number,
+  authToken?: string
 ): Promise<Array<{ largeUrl: string; smallUrl: string; originalUrl: string }>> {
   const results = [];
 
@@ -79,7 +88,7 @@ export async function processHarvestImages(
     const url = imageUrls[i];
     try {
       const fileName = `image-${i + 1}`;
-      const { largeUrl, smallUrl } = await processAndUploadImage(url, harvestId, fileName);
+      const { largeUrl, smallUrl } = await processAndUploadImage(url, harvestId, fileName, authToken);
       results.push({
         originalUrl: url,
         largeUrl,

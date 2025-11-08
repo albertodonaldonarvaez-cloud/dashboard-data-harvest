@@ -43,7 +43,7 @@ export const harvests = mysqlTable("harvests", {
   startTime: timestamp("startTime"),
   endTime: timestamp("endTime"),
   parcela: varchar("parcela", { length: 100 }), // escanea_la_parcela
-  pesoCaja: int("pesoCaja"), // peso_de_la_caja in grams (multiply kg by 1000)
+  pesoCaja: decimal("pesoCaja", { precision: 10, scale: 2 }), // peso_de_la_caja in kg
   fotoCaja: varchar("fotoCaja", { length: 255 }), // filename
   numeroCortadora: varchar("numeroCortadora", { length: 50 }),
   numeroCaja: varchar("numeroCaja", { length: 50 }),

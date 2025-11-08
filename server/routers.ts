@@ -157,7 +157,7 @@ export const appRouter = router({
     create: editorProcedure
       .input(z.object({
         parcela: z.string(),
-        pesoCaja: z.number(),
+        pesoCaja: z.string(), // Changed to string for decimal support
         numeroCortadora: z.string(),
         numeroCaja: z.string(),
         tipoHigo: z.string(),
@@ -186,7 +186,7 @@ export const appRouter = router({
       .input(z.object({
         id: z.number(),
         parcela: z.string().optional(),
-        pesoCaja: z.number().optional(),
+        pesoCaja: z.string().optional(), // Changed to string for decimal support
         numeroCortadora: z.string().optional(),
         numeroCaja: z.string().optional(),
         tipoHigo: z.string().optional(),
@@ -532,7 +532,7 @@ export const appRouter = router({
             // Create harvest record
             await db.createHarvest({
               parcela,
-              pesoCaja: item.peso_de_la_caja,
+              pesoCaja: item.peso_de_la_caja.toString(),
               numeroCortadora: item.numero_de_cortadora,
               numeroCaja: item.numero_de_caja,
               tipoHigo,
@@ -656,7 +656,7 @@ export const appRouter = router({
               // Create harvest record
               const harvestId = await db.createHarvest({
                 parcela: processed.parcela,
-                pesoCaja: processed.pesoCaja,
+                pesoCaja: processed.pesoCaja.toString(),
                 numeroCortadora: processed.numeroCortadora,
                 numeroCaja: processed.numeroCaja,
                 tipoHigo: processed.tipoHigo,
@@ -671,7 +671,7 @@ export const appRouter = router({
               if (processed.imageUrls && processed.imageUrls.length > 0) {
                 try {
                   const { processHarvestImages } = await import('./image-processor');
-                  const imageResults = await processHarvestImages(processed.imageUrls, harvestId);
+                  const imageResults = await processHarvestImages(processed.imageUrls, harvestId, config.token);
                   
                   // Save image URLs to database
                   for (const img of imageResults) {

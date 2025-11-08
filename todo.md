@@ -183,3 +183,12 @@
 - [x] Diagnosticar por qué testConnection devuelve "API no configurado"
 - [x] Verificar que el endpoint testConnection obtenga la configuración correctamente
 - [x] Probar conexión con credenciales reales
+
+
+## Corrección de Importación de KoboToolbox
+- [x] Revisar conversión de peso (kg) - debe ser número flotante no texto
+- [x] Corregir descarga de imágenes desde API de KoboToolbox
+- [x] Verificar almacenamiento de URLs de imágenes en base de datos
+- [x] Implementar visualización de imágenes en vista mosaico
+- [x] Implementar lightbox para ver imágenes grandes
+- [x] Probar con datos reales de la API

@@ -1,0 +1,1 @@
+ALTER TABLE `harvests` MODIFY COLUMN `pesoCaja` decimal(10,2);

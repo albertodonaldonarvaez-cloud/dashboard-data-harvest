@@ -166,7 +166,24 @@ export async function getAllHarvests(filters?: {
     query = query.where(and(...conditions)) as any;
   }
   
-  return await query.orderBy(desc(harvests.submissionTime));
+  const results = await query.orderBy(desc(harvests.submissionTime));
+  
+  // Add first thumbnail image to each harvest for mosaic view
+  const harvestsWithThumbs = await Promise.all(
+    results.map(async (harvest) => {
+      const attachments = await db.select()
+        .from(harvestAttachments)
+        .where(eq(harvestAttachments.harvestId, harvest.id))
+        .limit(1);
+      
+      return {
+        ...harvest,
+        thumbnailUrl: attachments[0]?.smallUrl || null,
+      };
+    })
+  );
+  
+  return harvestsWithThumbs;
 }
 
 export async function getHarvestById(id: number) {
@@ -454,7 +471,7 @@ export async function getTopCortadoras(limit: number = 5): Promise<Array<{
       }
       
       cortadoraStats[numero].count += 1;
-      cortadoraStats[numero].pesoTotal += h.pesoCaja || 0;
+      cortadoraStats[numero].pesoTotal += parseFloat(h.pesoCaja as string) || 0;
     });
     
     // Get custom names
