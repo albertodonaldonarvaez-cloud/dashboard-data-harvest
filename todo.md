@@ -141,3 +141,9 @@
 - [x] Identificar qué consulta en Settings requiere permisos de admin
 - [x] Ajustar Settings para que usuarios no-admin puedan acceder
 - [x] Separar funciones administrativas de opciones personales
+
+
+## Mejoras de UX para Usuarios No-Admin
+- [x] Ocultar ícono de Usuarios en NavigationMenu para usuarios no-admin
+- [x] Eliminar sección de Apariencia en Settings
+- [x] Eliminar sección de Acerca de en Settings
